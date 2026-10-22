@@ -1,0 +1,46 @@
+# LoCED on MaxText v0.2.5 -- CPU/single-device smoke configuration.
+#
+#   python -m loced.maxtext.train \
+#       loced/maxtext/configs/loced_tiny.yml \
+#       steps=4 run_name=loced-tiny-smoke
+#
+# Architecture values live in configs/models/loced-tiny.yml so the same
+# model can be launched from any run config.  Everything optimizer/mesh/
+# checkpoint related below is standard MaxText configuration.
+base_config: base.yml
+model_name: loced-tiny
+
+run_name: loced-tiny
+log_config: false
+
+# --- data / optimization (MaxText owns these) ---
+steps: 10
+learning_rate: 1.0e-3
+learning_rate_schedule_steps: 10
+warmup_steps_fraction: 0.1
+lr_schedule_type: cosine
+per_device_batch_size: 2
+max_target_length: 64
+enable_dropout: false
+
+# MaxText's Muon, not loced.muon.  maxtext_muon is sharding-aware and is the
+# production path on TPU/GPU.  The trainer rejects optax_muon so a run cannot
+# silently switch optimizer implementations.
+opt_type: muon
+muon_type: maxtext_muon
+muon_include_routers: true
+muon_use_all_to_all: false
+muon_weight_decay: 0.0
+adam_weight_decay: 0.01
+
+# One CPU/GPU device.  On a TPU slice set ici_fsdp_parallelism=-1 (default)
+# and leave ici_data_parallelism=1.
+ici_data_parallelism: 1
+ici_fsdp_parallelism: 1
+ici_tensor_parallelism: 1
+ici_expert_parallelism: 1
+
+# LoCED uses its own trainer; checkpointing is handled by
+# loced/maxtext/train.py (Orbax), not by MaxText's dataset pipeline.
+enable_checkpointing: false
+checkpoint_dir: ""
