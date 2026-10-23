@@ -217,3 +217,6 @@ Run smoke train: `python3.11 -m loced.train`
   prefill and decode functions are still called directly, and parity tests
   compare weights, loss, logits, gradients and decode against the reference.
   See `MAXTEXT.md` for the parameter/Muon mapping and the exact scope split.
+  The MaxText path is GPU-validated on Kaggle T4 x2: 15/15 integration tests,
+  36.0 ms/step on the 549,456-parameter config, and Orbax save/restore/resume.
+  TPU validation is pending.

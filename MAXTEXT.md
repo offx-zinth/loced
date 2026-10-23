@@ -226,6 +226,31 @@ the shipped `loced-tiny` config through MaxText's real `pyconfig` and maps it to
 Switch `ACCELERATOR` to `"tpu"` in the notebook's configuration cell to use the
 same flow on a TPU VM.
 
+### Validated on Kaggle T4 x2 (2026-10-23)
+
+Kernel: [LoCED MaxText v0.2.5 GPU Validation](https://www.kaggle.com/code/senthilvasany/loced-maxtext-v0-2-5-gpu-validation)
+
+| Item | Result |
+|---|---|
+| environment | Python 3.12.3, JAX 0.11.1, MaxText 0.2.5, driver 580.178.04 |
+| backend / devices | `gpu`, 2 x Tesla T4 |
+| architecture | 4 physical layers, 8 visits, 549,456 params |
+| integration tests | **15/15 passed** in 134.27 s |
+| real MaxText utilities | enforced with `LOCED_REQUIRE_REAL_MAXTEXT_UTILS=1`; pass |
+| 20-step benchmark | 36.0 ms/step, 7,110 tokens/s, loss 4.6542 -> 4.2957 |
+| Orbax checkpoint | 17 files / 4,423,572 bytes; restore step 2; resume step 3 |
+| raw report | [`validation/kaggle_t4_gpu_2026-10-23.json`](validation/kaggle_t4_gpu_2026-10-23.json) |
+
+Two environment-specific fixes are part of the notebook:
+
+* the venv's `site-packages/nvidia/*/lib` directories are added to
+  `LD_LIBRARY_PATH`; without this the JAX CUDA plugin cannot load cuSPARSE and
+  silently falls back to CPU;
+* MaxText's cosine schedule starts at LR 0 during warmup, so the one-step Muon
+  test disables warmup to exercise a nonzero update.
+
+TPU validation is still pending.
+
 ---
 
 ## 7. Environment notes and limitations

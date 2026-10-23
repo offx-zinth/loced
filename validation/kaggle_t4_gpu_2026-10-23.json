@@ -1,0 +1,30 @@
+{
+  "accelerator": "gpu",
+  "backend": "gpu",
+  "devices": 2,
+  "params": 549456,
+  "integration_tests": "PASS",
+  "parity_tolerance": 1e-05,
+  "train": {
+    "backend": "gpu",
+    "devices": 2,
+    "batch": 4,
+    "seq_len": 64,
+    "params": 549456,
+    "warmup_steps": 2,
+    "timed_steps": 20,
+    "loss_first": 4.654196262359619,
+    "loss_last": 4.295699119567871,
+    "ms_per_step": 36.00647849999632,
+    "tokens_per_sec": 7109.831637660044,
+    "optimizer_step": 22,
+    "param_changed": true
+  },
+  "checkpoint": {
+    "checkpoint_dir": "/kaggle/working/loced_runs/loced-kaggle-ckpt/checkpoints/",
+    "restored_step": 2,
+    "resumed_step": 3,
+    "files": 17,
+    "bytes": 4423572
+  }
+}
