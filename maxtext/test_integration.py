@@ -416,6 +416,10 @@ def test_maxtext_muon_one_training_step():
             "steps=1",
             "enable_checkpointing=false",
             "ici_fsdp_parallelism=-1",
+            # MaxText's cosine schedule starts at LR 0 during warmup.  This
+            # test is about the Muon update, so start at the peak LR.
+            "warmup_steps_fraction=0.0",
+            "learning_rate_final_fraction=1.0",
         ],
         config_class=__import__(
             "loced.maxtext.config", fromlist=["LoCEDMaxTextConfig"]
