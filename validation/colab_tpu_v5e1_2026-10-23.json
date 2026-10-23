@@ -1,0 +1,79 @@
+{
+  "accelerator": "tpu",
+  "backend": "tpu",
+  "devices": 1,
+  "params": 549456,
+  "integration_tests": "PASS",
+  "parity_tolerance": 1e-05,
+  "environment": {
+    "runtime": "Google Colab TPU",
+    "device": "TPU v5 lite (v5e-1)",
+    "python": "3.12.3",
+    "jax": "0.11.1",
+    "maxtext": "0.2.5",
+    "memory_bytes_limit": 16909336064
+  },
+  "architecture": {
+    "num_layers": 4,
+    "num_visits": 8,
+    "encode": [
+      "full",
+      "full",
+      "full",
+      "full"
+    ],
+    "decode": [
+      "full",
+      "full",
+      "full",
+      "full",
+      "reuse",
+      "reuse",
+      "reindex",
+      "reindex"
+    ],
+    "pool_m": 2,
+    "window": 16,
+    "top_k": 16,
+    "indexer_heads": 2,
+    "indexer_dim": 32,
+    "num_experts": 4,
+    "top_k_experts": 2
+  },
+  "tests": {
+    "passed": 15,
+    "failed": 0,
+    "warnings": 1,
+    "duration_s": 53.52
+  },
+  "train": {
+    "backend": "tpu",
+    "devices": 1,
+    "batch": 4,
+    "seq_len": 64,
+    "params": 549456,
+    "warmup_steps": 2,
+    "timed_steps": 20,
+    "loss_first": 4.654140472412109,
+    "loss_last": 4.295656204223633,
+    "loss_delta": -0.35848426818847656,
+    "ms_per_step": 7.069516499996098,
+    "tokens_per_sec": 36211.81165644656,
+    "optimizer_step": 22,
+    "param_changed": true
+  },
+  "checkpoint": {
+    "checkpoint_dir": "/content/loced_runs/loced-kaggle-ckpt/checkpoints/",
+    "restored_step": 2,
+    "resumed_step": 3,
+    "files": 14,
+    "bytes": 4385506
+  },
+  "notes": [
+    "Single-chip TPU run: validates the TPU backend, MaxText utilities, Muon optimizer and Orbax path, but not multi-device sharding.",
+    "The only warning is the JAX transparent-hugepages advisory for TPU v5e; it does not affect correctness.",
+    "The full notebook log is retained as validation/colab_tpu_v5e1_2026-10-23.pdf."
+  ],
+  "source_notebook": "LoCED_MaxText_Colab_TPU.ipynb",
+  "raw_log_pdf": "validation/colab_tpu_v5e1_2026-10-23.pdf"
+}

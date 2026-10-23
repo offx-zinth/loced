@@ -209,22 +209,24 @@ The MaxText integration suite currently has 15 tests. The YAML test initializes
 the shipped `loced-tiny` config through MaxText's real `pyconfig` and maps it to
 `LoCEDConfig`.
 
-### Kaggle GPU / TPU validation
+### Cloud validation notebooks
 
-`loced/LoCED_MaxText_GPU_Kaggle.ipynb` is the cloud validation notebook:
+Three notebooks cover the accelerator backends:
 
-* creates a Python 3.12 venv and installs MaxText v0.2.5 from the
-  `maxtext-v0.2.5` tag with `maxtext[cuda12]` (GPU) or `maxtext[tpu]` (TPU);
-* clones the LoCED repository if it is not already present;
-* sets `LOCED_REQUIRE_REAL_MAXTEXT_UTILS=1`, so the GPU/TPU run fails instead of
-  silently falling back to the CPU stubs;
-* runs the architecture check, the 15 integration tests, a 20-step MaxText
-  Muon benchmark, and an Orbax save/restore/resume check;
-* uses `LOCED_PARITY_TOL=1e-5` on GPU (the CPU default remains exact `0.0`);
-* writes `kaggle_gpu_report.json` with the results.
+* `LoCED_MaxText_GPU_Kaggle.ipynb` — Kaggle GPU (T4 x2 / L4),
+  `maxtext[cuda12]`;
+* `LoCED_MaxText_TPU_Kaggle.ipynb` — Kaggle TPU v5e-8, `maxtext[tpu]`;
+* `LoCED_MaxText_Colab_TPU.ipynb` — Colab TPU (free tier: v5e-1),
+  `maxtext[tpu]`.
 
-Switch `ACCELERATOR` to `"tpu"` in the notebook's configuration cell to use the
-same flow on a TPU VM.
+Each creates a Python 3.12 venv, installs MaxText v0.2.5 from the
+`maxtext-v0.2.5` tag, clones the LoCED repository if needed, and sets
+`LOCED_REQUIRE_REAL_MAXTEXT_UTILS=1` so the run fails instead of silently
+falling back to CPU stubs. They run the architecture check, the 15 integration
+tests, a 20-step MaxText Muon benchmark, and an Orbax save/restore/resume
+check. Cloud parity uses `LOCED_PARITY_TOL=1e-5`; the CPU default remains exact
+`0.0`. Reports are written as `kaggle_gpu_report.json`,
+`kaggle_tpu_report.json`, and `colab_tpu_report.json`, respectively.
 
 ### Validated on Kaggle T4 x2 (2026-10-23)
 
@@ -249,7 +251,31 @@ Two environment-specific fixes are part of the notebook:
 * MaxText's cosine schedule starts at LR 0 during warmup, so the one-step Muon
   test disables warmup to exercise a nonzero update.
 
-TPU validation is still pending.
+TPU validation is no longer pending. The single-chip run is recorded below;
+the 8-device Kaggle `TpuV5E8` notebook is the multi-device counterpart.
+
+### Validated on Colab TPU v5e-1 (2026-10-23)
+
+Notebook: [LoCED MaxText v0.2.5 — Colab TPU validation](https://colab.research.google.com/github/offx-zinth/loced/blob/master/LoCED_MaxText_Colab_TPU.ipynb)
+
+| Item | Result |
+|---|---|
+| environment | Python 3.12.3, JAX 0.11.1, MaxText 0.2.5 |
+| backend / devices | `tpu`, 1 x TPU v5 lite (v5e-1), 16.9 GB memory limit |
+| architecture | 4 physical layers, 8 visits, 549,456 params |
+| integration tests | **15/15 passed** in 53.52 s |
+| real MaxText utilities | enforced with `LOCED_REQUIRE_REAL_MAXTEXT_UTILS=1`; pass |
+| 20-step benchmark | 7.1 ms/step, 36,212 tokens/s, loss 4.6541 -> 4.2957 |
+| Orbax checkpoint | 14 files / 4,385,506 bytes; restore step 2; resume step 3 |
+| raw report | [`validation/colab_tpu_v5e1_2026-10-23.json`](validation/colab_tpu_v5e1_2026-10-23.json) |
+| full PDF log | [`validation/colab_tpu_v5e1_2026-10-23.pdf`](validation/colab_tpu_v5e1_2026-10-23.pdf) |
+
+This run used one TPU chip. It validates the TPU backend, real MaxText
+utilities, MaxText Muon updates, and the Orbax save/restore/resume path, but it
+does not exercise the 8-device mesh. The only warning was JAX's
+transparent-hugepages advisory for TPU v5e; it does not affect correctness.
+The Kaggle `TpuV5E8` job was still queued for TPU capacity when this run
+completed.
 
 ---
 
