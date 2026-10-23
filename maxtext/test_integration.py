@@ -506,7 +506,12 @@ def test_trainer_resumes_from_checkpoint(tmp_path):
 def test_trainer_rejects_non_maxtext_muon():
     def init_config(*overrides):
         return pyconfig.initialize(
-            ["test", "loced/maxtext/configs/loced_tiny.yml", *overrides],
+            [
+                "test",
+                "loced/maxtext/configs/loced_tiny.yml",
+                "ici_fsdp_parallelism=-1",
+                *overrides,
+            ],
             config_class=__import__(
                 "loced.maxtext.config", fromlist=["LoCEDMaxTextConfig"]
             ).LoCEDMaxTextConfig,
