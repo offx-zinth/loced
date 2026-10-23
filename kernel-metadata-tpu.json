@@ -1,0 +1,17 @@
+{
+  "id": "senthilvasany/loced-maxtext-v0-2-5-tpu-validation",
+  "title": "LoCED MaxText v0.2.5 TPU Validation",
+  "code_file": "LoCED_MaxText_TPU_Kaggle.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_tpu": true,
+  "enable_internet": true,
+  "keywords": [],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "machine_shape": "TpuV5E8"
+}
