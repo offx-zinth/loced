@@ -228,11 +228,16 @@ check. Cloud parity uses `LOCED_PARITY_TOL=1e-5`; the CPU default remains exact
 `0.0`. Reports are written as `kaggle_gpu_report.json`,
 `kaggle_tpu_report.json`, and `colab_tpu_report.json`, respectively.
 
-All cloud runs use the **0.55M-parameter `loced-tiny`** shape, not a 500M
-model. The 4-layer/8-visit contract and the model/optimizer/checkpoint code
-paths are identical; only width, MLP size, vocabulary, and expert dimensions
-are reduced. These results validate correctness and plumbing, not 500M-scale
-memory use or throughput.
+All three validation notebooks use the **0.55M-parameter `loced-tiny`**
+shape, not a 500M model. The 4-layer/8-visit contract and the
+model/optimizer/checkpoint code paths are identical; only width, MLP size,
+vocabulary, and expert dimensions are reduced. These results validate
+correctness and plumbing, not 500M-scale memory use or throughput.
+
+`LoCED_MaxText_500M_Colab_TPU.ipynb` is a separate **~500.2M-parameter scale
+smoke** for one TPU v5e-1 chip (two MaxText Muon steps, no checkpoint). It
+checks fit, parameter count, a real update, and peak memory; it does not
+replace the 15-test exact parity suite.
 
 ### Validated on Kaggle T4 x2 (2026-10-23)
 

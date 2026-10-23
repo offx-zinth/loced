@@ -1,0 +1,38 @@
+# LoCED-500M single-TPU smoke run (TPU v5e-1, 16 GB).
+#
+# Two MaxText Muon updates on a synthetic batch.  This is a scale/plumbing
+# check, not a convergence run.  Model shape: configs/models/loced-500m.yml.
+base_config: base.yml
+model_name: loced-500m
+
+run_name: loced-500m-tpu-smoke
+log_config: false
+
+# --- data / optimization (MaxText owns these) ---
+steps: 2
+learning_rate: 1.0e-4
+learning_rate_schedule_steps: 2
+warmup_steps_fraction: 0.0
+learning_rate_final_fraction: 1.0
+lr_schedule_type: cosine
+per_device_batch_size: 1
+max_target_length: 64
+enable_dropout: false
+
+# MaxText Muon only.
+opt_type: muon
+muon_type: maxtext_muon
+muon_include_routers: true
+muon_use_all_to_all: false
+muon_weight_decay: 0.0
+adam_weight_decay: 0.01
+
+# Single TPU chip.  The 8-device Kaggle kernel uses its own mesh overrides.
+ici_data_parallelism: 1
+ici_fsdp_parallelism: 1
+ici_tensor_parallelism: 1
+ici_expert_parallelism: 1
+
+# The 500M smoke writes no checkpoint; the tiny configs validate Orbax.
+enable_checkpointing: false
+checkpoint_dir: ""
