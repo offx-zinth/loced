@@ -1,0 +1,65 @@
+{
+  "accelerator": "tpu",
+  "backend": "tpu",
+  "devices": 8,
+  "params": 549456,
+  "integration_tests": "PASS",
+  "parity_tolerance": 1e-05,
+  "runtime": "Kaggle TPU v5e-8",
+  "architecture": {
+    "num_layers": 4,
+    "num_visits": 8,
+    "encode": [
+      "full",
+      "full",
+      "full",
+      "full"
+    ],
+    "decode": [
+      "full",
+      "full",
+      "full",
+      "full",
+      "reuse",
+      "reuse",
+      "reindex",
+      "reindex"
+    ],
+    "pool_m": 2,
+    "window": 16,
+    "top_k": 16,
+    "indexer_heads": 2,
+    "indexer_dim": 32,
+    "num_experts": 4,
+    "top_k_experts": 2
+  },
+  "train": {
+    "backend": "tpu",
+    "devices": 8,
+    "batch": 4,
+    "seq_len": 64,
+    "params": 549456,
+    "warmup_steps": 2,
+    "timed_steps": 20,
+    "loss_first": 4.654140472412109,
+    "loss_last": 4.295656204223633,
+    "ms_per_step": 11.256945849999056,
+    "tokens_per_sec": 22741.514742208827,
+    "optimizer_step": 22,
+    "param_changed": true
+  },
+  "checkpoint": {
+    "checkpoint_dir": "/kaggle/working/loced_runs/loced-kaggle-ckpt/checkpoints/",
+    "restored_step": 2,
+    "resumed_step": 3,
+    "files": 14,
+    "bytes": 4669466
+  },
+  "notes": [
+    "8-device data-parallel mesh (data=8, fsdp=1); the tiny 549,456-parameter config is the exact parity config.",
+    "The reported tokens_per_sec uses the per-device batch; the global synthetic-batch rate is approximately 8x (181,932 tokens/s).",
+    "Loss is identical to the single-chip Colab TPU v5e-1 run: 4.654140 -> 4.295656.",
+    "MaxText Muon was used for all 22 optimizer updates; Orbax restore and resume succeeded across the 8-device sharding."
+  ],
+  "source_notebook": "LoCED_MaxText_TPU_Kaggle.ipynb"
+}

@@ -220,6 +220,6 @@ Run smoke train: `python3.11 -m loced.train`
   The MaxText path is GPU-validated on Kaggle T4 x2: 15/15 integration tests,
   36.0 ms/step on the 549,456-parameter config, and Orbax save/restore/resume.
   It is also TPU-validated on Colab v5e-1: 15/15 tests, 7.1 ms/step, and Orbax
-  save/restore/resume. The 8-device Kaggle TPU v5e-8 job is the remaining
-  multi-device check; it was still queued for capacity when the single-chip
-  run completed.
+  save/restore/resume. The 8-device Kaggle TPU v5e-8 run also passes 15/15
+  tests, reaches 11.3 ms/step, and completes the sharded Orbax restore/resume
+  check, closing the multi-device TPU validation.

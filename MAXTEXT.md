@@ -234,10 +234,10 @@ model/optimizer/checkpoint code paths are identical; only width, MLP size,
 vocabulary, and expert dimensions are reduced. These results validate
 correctness and plumbing, not 500M-scale memory use or throughput.
 
-`LoCED_MaxText_500M_Colab_TPU.ipynb` is a separate **~500.2M-parameter scale
-smoke** for one TPU v5e-1 chip (two MaxText Muon steps, no checkpoint). It
-checks fit, parameter count, a real update, and peak memory; it does not
-replace the 15-test exact parity suite.
+[`LoCED_MaxText_500M_Colab_TPU.ipynb`](https://colab.research.google.com/github/offx-zinth/loced/blob/master/LoCED_MaxText_500M_Colab_TPU.ipynb)
+is a separate **~500.2M-parameter scale smoke** for one TPU v5e-1 chip (two
+MaxText Muon steps, no checkpoint). It checks fit, parameter count, a real
+update, and peak memory; it does not replace the 15-test exact parity suite.
 
 ### Validated on Kaggle T4 x2 (2026-10-23)
 
@@ -250,7 +250,7 @@ Kernel: [LoCED MaxText v0.2.5 GPU Validation](https://www.kaggle.com/code/senthi
 | architecture | 4 physical layers, 8 visits, 549,456 params |
 | integration tests | **15/15 passed** in 134.27 s |
 | real MaxText utilities | enforced with `LOCED_REQUIRE_REAL_MAXTEXT_UTILS=1`; pass |
-| 20-step benchmark | 36.0 ms/step, 7,110 tokens/s, loss 4.6542 -> 4.2957 |
+| 20-step benchmark | 36.0 ms/step, 7,110 per-device tokens/s (~14,220 global), loss 4.6542 -> 4.2957 |
 | Orbax checkpoint | 17 files / 4,423,572 bytes; restore step 2; resume step 3 |
 | raw report | [`validation/kaggle_t4_gpu_2026-10-23.json`](validation/kaggle_t4_gpu_2026-10-23.json) |
 
@@ -262,8 +262,8 @@ Two environment-specific fixes are part of the notebook:
 * MaxText's cosine schedule starts at LR 0 during warmup, so the one-step Muon
   test disables warmup to exercise a nonzero update.
 
-TPU validation is no longer pending. The single-chip run is recorded below;
-the 8-device Kaggle `TpuV5E8` notebook is the multi-device counterpart.
+Both TPU targets are now validated: the single-chip run below, and the
+8-device Kaggle `TpuV5E8` run recorded after it.
 
 ### Validated on Colab TPU v5e-1 (2026-10-23)
 
@@ -276,7 +276,7 @@ Notebook: [LoCED MaxText v0.2.5 — Colab TPU validation](https://colab.research
 | architecture | 4 physical layers, 8 visits, 549,456 params |
 | integration tests | **15/15 passed** in 53.52 s |
 | real MaxText utilities | enforced with `LOCED_REQUIRE_REAL_MAXTEXT_UTILS=1`; pass |
-| 20-step benchmark | 7.1 ms/step, 36,212 tokens/s, loss 4.6541 -> 4.2957 |
+| 20-step benchmark | 7.1 ms/step, 36,212 tokens/s (single chip), loss 4.6541 -> 4.2957 |
 | Orbax checkpoint | 14 files / 4,385,506 bytes; restore step 2; resume step 3 |
 | raw report | [`validation/colab_tpu_v5e1_2026-10-23.json`](validation/colab_tpu_v5e1_2026-10-23.json) |
 | full PDF log | [`validation/colab_tpu_v5e1_2026-10-23.pdf`](validation/colab_tpu_v5e1_2026-10-23.pdf) |
@@ -285,8 +285,28 @@ This run used one TPU chip. It validates the TPU backend, real MaxText
 utilities, MaxText Muon updates, and the Orbax save/restore/resume path, but it
 does not exercise the 8-device mesh. The only warning was JAX's
 transparent-hugepages advisory for TPU v5e; it does not affect correctness.
-The Kaggle `TpuV5E8` job was still queued for TPU capacity when this run
-completed.
+
+### Validated on Kaggle TPU v5e-8 (2026-10-24)
+
+Kernel: [LoCED MaxText v0.2.5 TPU Validation](https://www.kaggle.com/code/senthilvasany/loced-maxtext-v0-2-5-tpu-validation)
+
+| Item | Result |
+|---|---|
+| environment | MaxText v0.2.5 TPU image, Python 3.12 venv (same installer as v5e-1) |
+| backend / devices | `tpu`, 8 x TPU v5e |
+| architecture | 4 physical layers, 8 visits, 549,456 params |
+| integration tests | **15/15 passed** (`integration_tests: PASS`) |
+| real MaxText utilities | enforced with `LOCED_REQUIRE_REAL_MAXTEXT_UTILS=1`; pass |
+| mesh | 8-way data parallel (`data=8`, `fsdp=1`) |
+| 20-step benchmark | 11.3 ms/step, 22,741 per-device tokens/s (~181,900 global), loss 4.6541 -> 4.2957 |
+| Orbax checkpoint | 14 files / 4,669,466 bytes; restore step 2; resume step 3 |
+| raw report | [`validation/kaggle_tpu_v5e8_2026-10-24.json`](validation/kaggle_tpu_v5e8_2026-10-24.json) |
+
+The 8-device loss trajectory is identical to the single-chip run, and the
+Orbax restore/resume succeeded with the sharded checkpoint. The notebook's
+`tokens_per_sec` field uses the per-device batch only; the global synthetic
+batch rate is approximately 8x that number. This closes the multi-device TPU
+check.
 
 ---
 
