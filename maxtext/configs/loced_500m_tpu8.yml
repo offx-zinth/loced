@@ -1,0 +1,44 @@
+# LoCED-500M 8-chip TPU v5e-8 run config (Kaggle TpuV5E8).
+#
+#   python -m loced.maxtext.hf_train \
+#       loced/maxtext/configs/loced_500m_tpu8.yml \
+#       steps=200000 run_name=loced-500m-tpu8
+#
+# Mesh: 8-way data parallel, FSDP=1.  Parameters + MaxText Muon optimizer
+# states are sharded across the 8 chips; each chip holds ~1/8 of the model.
+base_config: base.yml
+model_name: loced-500m
+
+run_name: loced-500m-tpu8
+log_config: false
+
+# --- data / optimization (MaxText owns these) ---
+steps: 200000
+learning_rate: 1.0e-4
+learning_rate_schedule_steps: 200000
+warmup_steps_fraction: 0.02
+learning_rate_final_fraction: 0.1
+lr_schedule_type: cosine
+per_device_batch_size: 4
+max_target_length: 128
+enable_dropout: false
+
+# MaxText Muon only.
+opt_type: muon
+muon_type: maxtext_muon
+muon_include_routers: true
+muon_use_all_to_all: false
+muon_weight_decay: 0.0
+adam_weight_decay: 0.01
+
+# 8-chip data-parallel mesh.
+ici_data_parallelism: 8
+ici_fsdp_parallelism: 1
+ici_tensor_parallelism: 1
+ici_expert_parallelism: 1
+
+# Checkpointing: time-based every 10 minutes is handled by hf_train.py's
+# train_timed loop.  checkpoint_period is a step-based fallback.
+enable_checkpointing: true
+checkpoint_period: 10000
+checkpoint_dir: ""

@@ -1,7 +1,4 @@
-# LoCED-500M single-TPU smoke run (TPU v5e-1, 16 GB).
-#
-# Two MaxText Muon updates on a synthetic batch.  This is a scale/plumbing
-# check, not a convergence run.  Model shape: configs/models/loced-500m.yml.
+# LoCED-500M single-chip TPU run config (kept for the Colab smoke test).
 base_config: base.yml
 model_name: loced-500m
 
@@ -27,7 +24,7 @@ muon_use_all_to_all: false
 muon_weight_decay: 0.0
 adam_weight_decay: 0.01
 
-# Single TPU chip.  The 8-device Kaggle kernel uses its own mesh overrides.
+# Single TPU chip.
 ici_data_parallelism: 1
 ici_fsdp_parallelism: 1
 ici_tensor_parallelism: 1
