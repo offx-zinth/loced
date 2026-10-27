@@ -14,7 +14,9 @@ base_mlp_dim: 3840
 base_moe_mlp_dim: 3840
 mlp_activations: ["silu", "linear"]
 vocab_size: 32000
-max_target_length: 64
+# Sequence length is a run setting: 64 for the single-chip smoke, 128 for the
+# 2xT4 and 8-chip runs.  Keeping it out of the model YAML avoids MaxText's
+# "model config vs CLI override" conflict.
 normalization_layer_epsilon: 1.0e-6
 enable_dropout: false
 logits_via_embedding: false

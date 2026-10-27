@@ -408,6 +408,37 @@ def test_shipped_yaml_initializes_with_custom_config_class():
 
 
 @pytest.mark.skipif(not _HAS_MAXTEXT, reason="MaxText is not importable")
+@pytest.mark.parametrize(
+    ("config_name", "expected_seq_len"),
+    [
+        ("loced/maxtext/configs/loced_500m_t4x2.yml", 128),
+        ("loced/maxtext/configs/loced_500m_tpu8.yml", 128),
+        ("loced/maxtext/configs/loced_500m_tpu.yml", 64),
+    ],
+)
+def test_shipped_500m_yaml_keeps_run_sequence_length(
+    config_name: str, expected_seq_len: int
+):
+    """The 500M model YAML must not silently override the run sequence length.
+
+    MaxText merges the model YAML after the run YAML.  A ``max_target_length``
+    in the model file therefore wins over the run setting, and an explicit CLI
+    value triggers MaxText's model-vs-CLI conflict error.  Sequence length is a
+    run setting; this test covers the T4, TPU v5e-8, and Colab smoke configs.
+    """
+    config = pyconfig.initialize(
+        ["test", config_name, "steps=1"],
+        config_class=__import__(
+            "loced.maxtext.config", fromlist=["LoCEDMaxTextConfig"]
+        ).LoCEDMaxTextConfig,
+    )
+    assert config.max_target_length == expected_seq_len
+    assert config.base_emb_dim == 1024
+    assert config.base_num_decoder_layers == 4
+    assert config.num_experts == 8
+
+
+@pytest.mark.skipif(not _HAS_MAXTEXT, reason="MaxText is not importable")
 def test_maxtext_muon_one_training_step():
     config = pyconfig.initialize(
         [
