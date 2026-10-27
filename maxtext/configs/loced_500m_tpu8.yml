@@ -12,6 +12,10 @@ model_name: loced-500m
 run_name: loced-500m-tpu8
 log_config: false
 
+# Kaggle is a single host.  Without this MaxText tries to initialize JAX's
+# multi-host distributed runtime during config setup.
+skip_jax_distributed_system: true
+
 # --- data / optimization (MaxText owns these) ---
 steps: 200000
 learning_rate: 1.0e-4

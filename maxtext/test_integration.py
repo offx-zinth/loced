@@ -436,6 +436,10 @@ def test_shipped_500m_yaml_keeps_run_sequence_length(
     assert config.base_emb_dim == 1024
     assert config.base_num_decoder_layers == 4
     assert config.num_experts == 8
+    if expected_seq_len == 128:
+        # Kaggle is single-host; the T4 and TPU v5e-8 runs must not try to
+        # initialize JAX's multi-host distributed runtime during config setup.
+        assert config.skip_jax_distributed_system
 
 
 @pytest.mark.skipif(not _HAS_MAXTEXT, reason="MaxText is not importable")
