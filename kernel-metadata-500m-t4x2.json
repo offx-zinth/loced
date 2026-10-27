@@ -1,5 +1,5 @@
 {
-  "id": "senthilvasany/loced-maxtext-500m-t4x2-hf",
+  "id": "senthilvasany/loced-maxtext-500m-t4x2-hf-training",
   "title": "LoCED MaxText 500M T4x2 HF Training",
   "code_file": "LoCED_MaxText_500M_T4x2_HF_Kaggle.ipynb",
   "language": "python",
