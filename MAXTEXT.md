@@ -310,7 +310,40 @@ check.
 
 ---
 
-## 7. Environment notes and limitations
+## 7. 500M full-pass HF data setup
+
+The 500M training path streams all six `nampdn-ai` datasets with their
+dataset-specific text columns, rather than assuming one shared schema:
+
+| Dataset | Train rows | Text fields used | Est. tokens |
+|---|---:|---|---:|
+| `tiny-textbooks` | 399,000 | `textbook` + `text` | 0.40B |
+| `tiny-strange-textbooks` | 1,000,000 | `text` | 0.70B |
+| `tiny-codes` | 1,632,309 | `prompt` + `response` | 0.98B |
+| `tiny-math-textbooks` | 635,497 | `response` | 1.41B |
+| `tiny-orca-textbooks` | 146,732 | `textbook` + `question` + `response` | 0.28B |
+| `tiny-webtext` | 2,276,083 | `human` + `bot` + `part_of_speech` | 0.95B |
+| **total** | **6,089,621** | | **~4.72B** |
+
+The token estimates come from tokenizing the datasets' first-row samples with
+the TinyLlama 32k tokenizer; they are planning numbers, not exact counts. At
+`per_device_batch_size=2` and `max_target_length=128` on 2×T4, one pass is
+about **18.5M optimizer steps**. The trainer's step cap is above that and the
+stream exhaustion break ends the run, so all source tokens are consumed.
+
+The mixer uses an equal shuffled document schedule, then a 1,024-window shuffle
+buffer. Tokenization feeds a rolling token buffer across document boundaries
+(with BOS/EOS separators); the only padding is the final short window, so no
+source tokens are dropped. The T4 configuration is
+`maxtext/configs/loced_500m_t4x2.yml`; the notebook is
+[`LoCED_MaxText_500M_T4x2_HF_Kaggle.ipynb`](https://www.kaggle.com/code/senthilvasany/loced-maxtext-500m-t4x2-hf-training).
+A full pass is substantially longer than one Kaggle GPU session; Orbax
+checkpoints every 10 minutes let the run continue, but the 8-chip TPU path is
+the practical way to finish the pass.
+
+---
+
+## 8. Environment notes and limitations
 
 * MaxText v0.2.5 requires Python >= 3.12 and its pinned JAX/Flax stack.
   `maxtext_muon`, `pyconfig`, the mesh helpers and Orbax checkpoints should be
