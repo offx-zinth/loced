@@ -2,10 +2,13 @@
 #
 #   python -m loced.maxtext.hf_train \
 #       loced/maxtext/configs/loced_500m_t4x2.yml \
-#       steps=20 run_name=loced-500m-t4x2-hf
+#       steps=25000000 run_name=loced-500m-t4x2-hf
 #
-# This is the GPU smoke/training path for the mixed nampdn-ai datasets.  For a
-# longer run, override steps= and keep the 10-minute time-based checkpoints.
+# The step cap is deliberately above one full mixed pass (~4-5B tokens at
+# batch 2 x 128).  hf_train.py stops when the six streaming datasets are
+# exhausted, so this is a full-pass run, not an arbitrary 25M-step run.  Keep
+# the 10-minute time-based checkpoints: a full pass takes many Kaggle sessions
+# on 2x T4.
 base_config: base.yml
 model_name: loced-500m
 
@@ -13,14 +16,14 @@ run_name: loced-500m-t4x2-hf
 log_config: false
 
 # --- data / optimization (MaxText owns these) ---
-steps: 20
+steps: 25000000
 learning_rate: 1.0e-4
-learning_rate_schedule_steps: 20
-warmup_steps_fraction: 0.1
+learning_rate_schedule_steps: 20000000
+warmup_steps_fraction: 0.02
 learning_rate_final_fraction: 1.0
 lr_schedule_type: cosine
-per_device_batch_size: 1
-max_target_length: 64
+per_device_batch_size: 2
+max_target_length: 128
 enable_dropout: false
 
 # MaxText Muon only.

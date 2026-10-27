@@ -1,14 +1,18 @@
 """Full LoCED-500M training on streaming Hugging Face datasets.
 
-This is a cloud training entry point for the 8-chip MaxText TPU path.  It:
+This is the MaxText training entry point used by both the 8-chip TPU and the
+2x T4 GPU notebooks.  It:
 
-1. Streams (no local download) the nampdn-ai textbook / code / webtext datasets,
-   mixes them in a configurable ratio, and tokenizes on the fly.
+1. Streams (no local download) the six nampdn-ai textbook / code / webtext
+   datasets, interleaves them with a shuffled ratio schedule, keeps every
+   token in a rolling stream, and tokenizes on the fly with a 32k tokenizer.
 2. Trains the ~500.2M LoCED model with MaxText Muon (opt_type="muon",
-   muon_type="maxtext_muon") on an 8-way data-parallel TPU v5e-8 mesh.
+   muon_type="maxtext_muon").
 3. Checkpoints model + optimizer with Orbax every 10 minutes of wall clock
-   (once total runtime passes 29880 s / ~8.3 h), plus a final checkpoint.
-4. Resumes from the latest Orbax checkpoint if one exists.
+   once total runtime passes ``LOCED_CKPT_AFTER_S`` (default 29880 s / ~8.3 h;
+   pass 0 to start checkpointing immediately), plus a final checkpoint.
+4. Resumes from the latest Orbax checkpoint if one exists.  A full pass is
+   ~4.7B tokens; on 2x T4 it spans multiple Kaggle sessions.
 
 The HF token is read from the environment (``HF_TOKEN`` / ``HF_HUB_TOKEN``) --
 it is never hard-coded here.  Pass it in the Kaggle/Colab notebook cell or as a
@@ -18,12 +22,14 @@ Usage (Kaggle TPU v5e-8)::
 
     python -m loced.maxtext.hf_train \
         loced/maxtext/configs/loced_500m_tpu8.yml \
-        steps=200000 run_name=loced-500m-tpu8 \
+        steps=25000000 run_name=loced-500m-tpu8 \
         hf_datasets="nampdn-ai/tiny-textbooks,nampdn-ai/tiny-strange-textbooks,nampdn-ai/tiny-codes,nampdn-ai/tiny-math-textbooks,nampdn-ai/tiny-orca-textbooks,nampdn-ai/tiny-webtext" \
         hf_ratios="1.0,1.0,1.0,1.0,1.0,1.0"
 
 The run config sets ``steps``, ``per_device_batch_size`` and ``max_target_length``;
-override them on the command line as needed.
+override them on the command line as needed.  Set ``steps`` above the full-pass
+estimate so the loop stops when the streams are exhausted, not at an arbitrary
+step count.
 """
 
 from __future__ import annotations
@@ -72,6 +78,19 @@ DEFAULT_TOKENIZER = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 # Column names commonly used for raw text in these datasets.
 _TEXT_COLUMNS = ("text", "content", "body", "document", "prompt", "completion")
 
+# The nampdn-ai datasets do not share one schema: tiny-codes stores the answer in
+# "response", tiny-math stores the whole textbook in "response", tiny-orca has a
+# textbook plus a question/answer, and tiny-webtext has human/bot sides.  Using
+# one generic column silently trains on prompts, UUIDs, or half the examples.
+_DATASET_TEXT_FIELDS: dict[str, tuple[str, ...]] = {
+    "tiny-textbooks": ("textbook", "text"),
+    "tiny-strange-textbooks": ("text",),
+    "tiny-codes": ("prompt", "response"),
+    "tiny-math-textbooks": ("response",),
+    "tiny-orca-textbooks": ("textbook", "question", "prompt", "response"),
+    "tiny-webtext": ("human", "bot", "part_of_speech"),
+}
+
 
 def _hf_token() -> str | None:
     return os.environ.get("HF_TOKEN") or os.environ.get("HF_HUB_TOKEN")
@@ -81,11 +100,28 @@ def _text_column(features) -> str | None:
     for name in _TEXT_COLUMNS:
         if name in features:
             return name
-    # Fall back to the first string-ish column.
+    # Fall back to the first string-ish column, but never to an id-like field.
     for name, feat in features.items():
+        if name.lower() in {"id", "idx", "uuid"}:
+            continue
         if getattr(feat, "dtype", None) == "string" or "Value" in type(feat).__name__:
             return name
     return None
+
+
+def _extract_text(dataset_name: str, example: dict, features) -> str | None:
+    """Build the training text from the dataset-specific columns."""
+    short_name = dataset_name.rsplit("/", 1)[-1]
+    fields = _DATASET_TEXT_FIELDS.get(short_name)
+    if fields is None:
+        column = _text_column(features)
+        fields = (column,) if column else ()
+    parts = [
+        str(example[field]).strip()
+        for field in fields
+        if isinstance(example.get(field), str) and example[field].strip()
+    ]
+    return "\n\n".join(parts) if parts else None
 
 
 def _iter_dataset_text(
@@ -112,8 +148,8 @@ def _iter_dataset_text(
         )
     ds = ds.shuffle(seed=seed, buffer_size=shuffle_buffer)
     for example in ds:
-        text = example.get(column)
-        if isinstance(text, str) and text.strip():
+        text = _extract_text(dataset_name, example, ds.features)
+        if text is not None:
             yield text
 
 
@@ -122,16 +158,38 @@ def _mix_iterators(
     ratios: list[float],
     rng: np.random.Generator,
 ) -> Iterator[str]:
-    """Probability-mix several streaming text iterators by ratio."""
-    active = [{"it": it, "w": float(w)} for it, w in zip(iterators, ratios)]
+    """Weighted round-robin mix so every cycle contains all datasets.
+
+    A probability-per-example draw can accidentally produce a long run from a
+    single dataset.  This builds a deterministic ratio schedule (e.g. 21/21/12/
+    5/8/34 slots per 100 examples), reshuffles each cycle, and skips datasets
+    once they are exhausted.  That keeps the training stream mixed.
+    """
+    weights = [max(0.0, float(r)) for r in ratios]
+    if len(weights) != len(iterators):
+        raise ValueError(
+            f"HF_RATIOS has {len(weights)} values for {len(iterators)} datasets"
+        )
+    if sum(weights) <= 0:
+        weights = [1.0] * len(iterators)
+    scale = 100.0 / sum(weights)
+    counts = [
+        0 if weight <= 0 else max(1, int(round(weight * scale)))
+        for weight in weights
+    ]
+    active = {i for i, weight in enumerate(weights) if weight > 0}
+    schedule = [i for i, count in enumerate(counts) for _ in range(count)]
     while active:
-        total = sum(a["w"] for a in active)
-        probs = [a["w"] / total for a in active]
-        pos = int(rng.choice(len(active), p=probs))
-        try:
-            yield next(active[pos]["it"])
-        except StopIteration:
-            active.pop(pos)
+        rng.shuffle(schedule)
+        for i in schedule:
+            if i not in active:
+                continue
+            try:
+                yield next(iterators[i])
+            except StopIteration:
+                active.remove(i)
+                if not active:
+                    break
 
 
 def hf_streaming_batches(
@@ -147,11 +205,11 @@ def hf_streaming_batches(
 ) -> Iterable[jax.Array]:
     """Yield int32 ``[batch, seq]`` token batches from streaming HF datasets.
 
-    Tokenization: if ``tokenizer_name`` is set it is loaded with ``transformers``
-    and must produce ids in ``[0, vocab_size)``.  Otherwise a deterministic
-    character hash is used so the script runs without an external tokenizer; for
-    real training you should train/use a 32k-vocab tokenizer that matches the
-    model and pass it via ``tokenizer_name``.
+    The tokenizer defaults to TinyLlama's 32k-vocab tokenizer, which matches the
+    LoCED vocabulary.  Documents are concatenated through a rolling token buffer
+    (with BOS/EOS separators), so trailing tokens are not dropped; only the
+    final short window is padded.  A shuffle buffer mixes windows from all
+    datasets before batching.
     """
     rng = np.random.default_rng(seed)
     token = _hf_token()
@@ -159,6 +217,7 @@ def hf_streaming_batches(
 
     if tokenizer_name is None:
         tokenizer_name = DEFAULT_TOKENIZER
+    tokenizer = None
     if tokenizer_name is not None:
         from transformers import AutoTokenizer
 
@@ -188,28 +247,48 @@ def hf_streaming_batches(
     ]
     mixed = _mix_iterators(iterators, list(ratios), rng)
 
-    batch: list[int] = []
+    # Keep one rolling token stream and cut it into seq_len windows.  This
+    # preserves every token across document boundaries instead of dropping each
+    # document's short tail.  A shuffle buffer then mixes windows from all
+    # datasets before they are formed into batches.
+    pad_id = int(getattr(tokenizer, "pad_token_id", 0) or 0)
+    eos_id = getattr(tokenizer, "eos_token_id", None)
+    window_buffer: list[list[int]] = []
+    shuffle_windows = max(1024, batch_size * 64)
+    token_buffer: list[int] = []
     count = 0
     for text in mixed:
         if max_examples is not None and count >= max_examples:
             break
         ids = encode(text)
-        # Chunk long documents into seq_len windows (drop short tail).
-        for start in range(0, len(ids) - seq_len + 1, seq_len):
-            window = ids[start : start + seq_len]
-            if len(window) < seq_len:
-                window = window + [0] * (seq_len - len(window))
-            batch.append(window)
-            if len(batch) == batch_size:
-                yield jnp.asarray(batch, dtype=jnp.int32)
-                batch = []
+        if not ids:
+            continue
+        token_buffer.extend(ids)
+        if eos_id is not None:
+            token_buffer.append(int(eos_id) % vocab_size)
+        while len(token_buffer) >= seq_len:
+            window_buffer.append(token_buffer[:seq_len])
+            del token_buffer[:seq_len]
+            if len(window_buffer) >= shuffle_windows:
+                rng.shuffle(window_buffer)
+                while len(window_buffer) >= batch_size:
+                    batch = [window_buffer.pop() for _ in range(batch_size)]
+                    yield jnp.asarray(batch, dtype=jnp.int32)
         count += 1
 
-    if batch:
-        # Pad the final partial batch.
-        while len(batch) < batch_size:
-            batch.append([0] * seq_len)
+    # Flush the last full windows, then pad only the final partial window so no
+    # source tokens are discarded.
+    if token_buffer:
+        token_buffer.extend([pad_id] * (seq_len - len(token_buffer)))
+        window_buffer.append(token_buffer)
+    rng.shuffle(window_buffer)
+    while len(window_buffer) >= batch_size:
+        batch = [window_buffer.pop() for _ in range(batch_size)]
         yield jnp.asarray(batch, dtype=jnp.int32)
+    if window_buffer:
+        while len(window_buffer) < batch_size:
+            window_buffer.append([pad_id] * seq_len)
+        yield jnp.asarray(window_buffer, dtype=jnp.int32)
 
 
 # ---------------------------------------------------------------------------
@@ -251,6 +330,8 @@ def train_timed(
     t_start = time.time()
     last_ckpt = t_start
     last_step = start_step
+    did_step = False
+    schedule_steps = max(1, int(getattr(config, "learning_rate_schedule_steps", steps)))
     # Data-parallel input: global batch is sharded across the "data" mesh axis,
     # so each device sees per_device_batch_size examples.
     data_sharding = NamedSharding(mesh, P("data", None))
@@ -266,9 +347,10 @@ def train_timed(
         loss, metrics = train_step(model, optimizer, tokens)
         last_metrics = {k: float(v) for k, v in metrics.items()}
         last_step = step
+        did_step = True
 
         if log_every > 0 and (step % log_every == 0 or step == steps - 1):
-            lr = float(schedule(step))
+            lr = float(schedule(min(step, schedule_steps - 1)))
             elapsed = time.time() - t_start
             max_logging.log(
                 f"step {step:6d} loss {float(loss):.6f} "
@@ -284,7 +366,7 @@ def train_timed(
             max_logging.log(f"time-based checkpoint at step {step} ({now - t_start:.0f}s)")
 
     # Final checkpoint.
-    if ckpt_dir and steps > start_step:
+    if ckpt_dir and did_step:
         save_checkpoint(ckpt_dir, model, optimizer)
         max_logging.log(f"final checkpoint at step {last_step}")
 
@@ -320,6 +402,7 @@ def main(argv: list[str] | None = None) -> None:
     _, _, metrics = train_timed(
         config,
         batches,
+        log_every=int(os.environ.get("HF_LOG_EVERY", "50")),
         long_run_threshold_s=float(
             os.environ.get("LOCED_CKPT_AFTER_S", str(LONG_RUN_THRESHOLD_S))
         ),
