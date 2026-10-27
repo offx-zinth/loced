@@ -476,6 +476,15 @@ def test_maxtext_muon_one_training_step():
 
 
 @pytest.mark.skipif(not _HAS_MAXTEXT, reason="MaxText is not importable")
+def test_empty_checkpoint_directory_is_not_restored(tmp_path):
+    """A pre-created but empty checkpoint dir must start a fresh run."""
+    empty = tmp_path / "empty-checkpoints"
+    empty.mkdir()
+    assert maxtext_train.load_checkpoint(str(empty), None, None, None) is None
+    assert maxtext_train.load_checkpoint(str(tmp_path / "missing"), None, None, None) is None
+
+
+@pytest.mark.skipif(not _HAS_MAXTEXT, reason="MaxText is not importable")
 def test_orbax_checkpoint_roundtrip(tmp_path):
     config = pyconfig.initialize(
         [

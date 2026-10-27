@@ -147,11 +147,25 @@ def save_checkpoint(path: str, model: LoCEDModel, optimizer: nnx.Optimizer) -> N
     checkpointer.wait_until_finished()
 
 
+def _checkpoint_exists(path: str) -> bool:
+    """Return True only for an Orbax StandardCheckpointer checkpoint.
+
+    Notebooks often create the checkpoint directory before the first save.  An
+    empty directory must be treated as "no checkpoint", not passed to Orbax
+    restore, which raises instead of returning an empty state.
+    """
+    if not os.path.isdir(path):
+        return False
+    return os.path.exists(os.path.join(path, "_METADATA")) or os.path.exists(
+        os.path.join(path, "checkpoint")
+    )
+
+
 def load_checkpoint(
     path: str, model: LoCEDModel, optimizer: nnx.Optimizer, mesh
 ) -> int | None:
     """Restore model/optimizer in place; return the number of completed steps."""
-    if not os.path.exists(path):
+    if not _checkpoint_exists(path):
         return None
     current = _checkpoint_state(model, optimizer)
     target = jax.tree.map(
