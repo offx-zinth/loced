@@ -36,12 +36,14 @@ from typing import Iterable, Iterator
 import jax
 import jax.numpy as jnp
 import numpy as np
+from jax.sharding import NamedSharding
+from jax.sharding import PartitionSpec as P
 
 from maxtext.configs import pyconfig
 from maxtext.utils import max_logging
 
 from .config import LoCEDMaxTextConfig, loced_config_from_maxtext
-from .modeling import LoCEDModel, build_model
+from .modeling import LoCEDModel
 from .train import (
     checkpoint_path,
     create_model_and_mesh,
@@ -63,6 +65,9 @@ DEFAULT_DATASETS = (
     "nampdn-ai/tiny-orca-textbooks",
     "nampdn-ai/tiny-webtext",
 )
+
+# TinyLlama's tokenizer has exactly 32,000 entries, matching the LoCED vocab.
+DEFAULT_TOKENIZER = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
 # Column names commonly used for raw text in these datasets.
 _TEXT_COLUMNS = ("text", "content", "body", "document", "prompt", "completion")
@@ -118,20 +123,15 @@ def _mix_iterators(
     rng: np.random.Generator,
 ) -> Iterator[str]:
     """Probability-mix several streaming text iterators by ratio."""
-    active = list(range(len(iterators)))
-    probs = [float(r) for r in ratios]
+    active = [{"it": it, "w": float(w)} for it, w in zip(iterators, ratios)]
     while active:
-        norm = sum(probs[j] for j in active)
-        pick = [probs[j] / norm for j in active]
-        sel_pos = int(rng.choice(len(active), p=pick))
-        i = active[sel_pos]
+        total = sum(a["w"] for a in active)
+        probs = [a["w"] / total for a in active]
+        pos = int(rng.choice(len(active), p=probs))
         try:
-            yield next(iterators[i])
+            yield next(active[pos]["it"])
         except StopIteration:
-            active.pop(sel_pos)
-            probs.pop(sel_pos)
-            if not active:
-                break
+            active.pop(pos)
 
 
 def hf_streaming_batches(
@@ -157,6 +157,8 @@ def hf_streaming_batches(
     token = _hf_token()
     ratios = ratios or tuple(1.0 for _ in datasets)
 
+    if tokenizer_name is None:
+        tokenizer_name = DEFAULT_TOKENIZER
     if tokenizer_name is not None:
         from transformers import AutoTokenizer
 
@@ -168,14 +170,17 @@ def hf_streaming_batches(
 
         def encode(text: str) -> list[int]:
             ids = tokenizer.encode(text, add_special_tokens=False)
+            if tokenizer.bos_token_id is not None:
+                ids = [int(tokenizer.bos_token_id)] + ids
             return [int(i) % vocab_size for i in ids]
 
     else:
 
         def encode(text: str) -> list[int]:
-            # Deterministic per-character hash into [0, vocab_size).  Smoke-only
-            # placeholder; replace with a real 32k-vocab tokenizer for quality.
-            return [(hash(text) * 31 + i) % vocab_size for i in range(len(text))]
+            import zlib
+
+            seed_hash = zlib.crc32(text.encode("utf-8"))
+            return [(seed_hash * 31 + i) % vocab_size for i in range(len(text))]
 
     iterators = [
         _iter_dataset_text(name, split, token, seed + i)
@@ -245,6 +250,10 @@ def train_timed(
     last_metrics: dict = {}
     t_start = time.time()
     last_ckpt = t_start
+    last_step = start_step
+    # Data-parallel input: global batch is sharded across the "data" mesh axis,
+    # so each device sees per_device_batch_size examples.
+    data_sharding = NamedSharding(mesh, P("data", None))
 
     for step in range(start_step, steps):
         try:
@@ -253,8 +262,10 @@ def train_timed(
             max_logging.log(f"dataset exhausted at step {step}")
             break
 
+        tokens = jax.device_put(tokens, data_sharding)
         loss, metrics = train_step(model, optimizer, tokens)
         last_metrics = {k: float(v) for k, v in metrics.items()}
+        last_step = step
 
         if log_every > 0 and (step % log_every == 0 or step == steps - 1):
             lr = float(schedule(step))
@@ -275,7 +286,7 @@ def train_timed(
     # Final checkpoint.
     if ckpt_dir and steps > start_step:
         save_checkpoint(ckpt_dir, model, optimizer)
-        max_logging.log(f"final checkpoint at step {step if steps > start_step else start_step}")
+        max_logging.log(f"final checkpoint at step {last_step}")
 
     return model, optimizer, last_metrics
 
@@ -293,18 +304,26 @@ def main(argv: list[str] | None = None) -> None:
     ratios = tuple(float(r) for r in ratios_env.split(",") if r.strip()) or None
     tokenizer_name = os.environ.get("HF_TOKENIZER") or getattr(config, "hf_tokenizer", None) or None
     seed = int(getattr(config, "init_weights_seed", 0))
+    data_parallelism = max(1, int(getattr(config, "ici_data_parallelism", 1)))
+    global_batch = int(config.per_device_batch_size) * data_parallelism
 
     batches = hf_streaming_batches(
         loced_cfg.vocab_size,
         int(config.max_target_length),
-        int(config.per_device_batch_size),
+        global_batch,
         datasets=datasets,
         ratios=ratios,
         seed=seed,
         tokenizer_name=tokenizer_name,
     )
 
-    _, _, metrics = train_timed(config, batches)
+    _, _, metrics = train_timed(
+        config,
+        batches,
+        long_run_threshold_s=float(
+            os.environ.get("LOCED_CKPT_AFTER_S", str(LONG_RUN_THRESHOLD_S))
+        ),
+    )
     max_logging.log(f"finished LoCED HF run: {metrics}")
 
 
