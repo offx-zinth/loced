@@ -1,0 +1,17 @@
+{
+  "id": "senthilvasany/loced-maxtext-500m-t4x2-hf",
+  "title": "LoCED MaxText 500M T4x2 HF Training",
+  "code_file": "LoCED_MaxText_500M_T4x2_HF_Kaggle.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "machine_shape": "NvidiaTeslaT4"
+}

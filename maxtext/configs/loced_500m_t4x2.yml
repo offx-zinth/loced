@@ -1,0 +1,43 @@
+# LoCED-500M 2x T4 (FSDP=2) HF streaming training config.
+#
+#   python -m loced.maxtext.hf_train \
+#       loced/maxtext/configs/loced_500m_t4x2.yml \
+#       steps=20 run_name=loced-500m-t4x2-hf
+#
+# This is the GPU smoke/training path for the mixed nampdn-ai datasets.  For a
+# longer run, override steps= and keep the 10-minute time-based checkpoints.
+base_config: base.yml
+model_name: loced-500m
+
+run_name: loced-500m-t4x2-hf
+log_config: false
+
+# --- data / optimization (MaxText owns these) ---
+steps: 20
+learning_rate: 1.0e-4
+learning_rate_schedule_steps: 20
+warmup_steps_fraction: 0.1
+learning_rate_final_fraction: 1.0
+lr_schedule_type: cosine
+per_device_batch_size: 1
+max_target_length: 64
+enable_dropout: false
+
+# MaxText Muon only.
+opt_type: muon
+muon_type: maxtext_muon
+muon_include_routers: true
+muon_use_all_to_all: false
+muon_weight_decay: 0.0
+adam_weight_decay: 0.01
+
+# 2x T4, FSDP=2.  Parameters and optimizer state are sharded across both GPUs.
+ici_data_parallelism: 1
+ici_fsdp_parallelism: 2
+ici_tensor_parallelism: 1
+ici_expert_parallelism: 1
+
+# hf_train.py does the 10-minute wall-clock checkpointing; this is the fallback.
+enable_checkpointing: true
+checkpoint_period: 10
+checkpoint_dir: ""
