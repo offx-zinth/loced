@@ -1,0 +1,50 @@
+# LoCED-100M 8-chip TPU v5e-8 full-pass HF training config.
+#
+#   python -m loced.maxtext.hf_train \
+#       loced/maxtext/configs/loced_100m_tpu8.yml \
+#       steps=200000 run_name=loced-100m-tpu8-hf
+#
+# The step cap is above the estimated ~4.72B-token full mixed pass at a global
+# batch of 8 chips x 32 examples x 128 tokens = 32,768 tokens/step.  hf_train.py
+# stops when the six streaming datasets are exhausted, so a run that reaches
+# step ~144k consumes the full pass rather than stopping at an arbitrary cap.
+base_config: base.yml
+model_name: loced-100m
+
+run_name: loced-100m-tpu8-hf
+log_config: false
+
+# Kaggle is a single host.  Without this MaxText tries to initialize JAX's
+# multi-host distributed runtime during config setup.
+skip_jax_distributed_system: true
+
+# --- data / optimization (MaxText owns these) ---
+steps: 200000
+learning_rate: 3.0e-4
+learning_rate_schedule_steps: 160000
+warmup_steps_fraction: 0.02
+learning_rate_final_fraction: 0.1
+lr_schedule_type: cosine
+per_device_batch_size: 32
+max_target_length: 128
+enable_dropout: false
+
+# MaxText Muon only.
+opt_type: muon
+muon_type: maxtext_muon
+muon_include_routers: true
+muon_use_all_to_all: false
+muon_weight_decay: 0.0
+adam_weight_decay: 0.01
+
+# 8-chip data-parallel mesh.  The model is replicated; each chip receives
+# 32 sequences per step and gradients are all-reduced across the 8 chips.
+ici_data_parallelism: 8
+ici_fsdp_parallelism: 1
+ici_tensor_parallelism: 1
+ici_expert_parallelism: 1
+
+# hf_train.py does the 10-minute wall-clock checkpointing; this is the fallback.
+enable_checkpointing: true
+checkpoint_period: 10000
+checkpoint_dir: ""

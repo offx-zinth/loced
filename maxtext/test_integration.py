@@ -408,6 +408,31 @@ def test_shipped_yaml_initializes_with_custom_config_class():
 
 
 @pytest.mark.skipif(not _HAS_MAXTEXT, reason="MaxText is not importable")
+def test_shipped_100m_tpu8_config():
+    """The 100M full-pass config keeps the LoCED contract and run settings."""
+    config = pyconfig.initialize(
+        ["test", "loced/maxtext/configs/loced_100m_tpu8.yml", "steps=1"],
+        config_class=__import__(
+            "loced.maxtext.config", fromlist=["LoCEDMaxTextConfig"]
+        ).LoCEDMaxTextConfig,
+    )
+    cfg = loced_config_from_maxtext(config)
+    assert config.model_name == "loced-100m"
+    assert cfg.hidden_size == config.base_emb_dim == 512
+    assert cfg.intermediate_size == config.base_moe_mlp_dim == 1152
+    assert cfg.num_layers == 4
+    assert cfg.num_visits == 8
+    assert cfg.num_experts == 8
+    assert cfg.encode_layers == ("full",) * 4
+    assert cfg.decode_layers[4:] == ("reuse", "reuse", "reindex", "reindex")
+    assert config.max_target_length == 128
+    assert config.per_device_batch_size == 32
+    assert config.opt_type == "muon"
+    assert config.muon_type == "maxtext_muon"
+    assert config.skip_jax_distributed_system
+
+
+@pytest.mark.skipif(not _HAS_MAXTEXT, reason="MaxText is not importable")
 @pytest.mark.parametrize(
     ("config_name", "expected_seq_len"),
     [

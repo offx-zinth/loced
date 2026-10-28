@@ -1,0 +1,17 @@
+{
+  "id": "senthilvasany/loced-maxtext-100m-tpu-v5e-8-hf-training",
+  "title": "LoCED MaxText 100M TPU v5e-8 HF Training",
+  "code_file": "LoCED_MaxText_100M_TPU8_HF_Kaggle.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_tpu": true,
+  "enable_internet": true,
+  "keywords": [],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "machine_shape": "TpuV5E8"
+}
