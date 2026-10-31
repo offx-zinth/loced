@@ -341,6 +341,35 @@ A full pass is substantially longer than one Kaggle GPU session; Orbax
 checkpoints every 10 minutes let the run continue, but the 8-chip TPU path is
 the practical way to finish the pass.
 
+### 100M TPU v5e-8 full-pass path
+
+`maxtext/configs/models/loced-100m.yml` keeps the same 4-layer / 8-visit
+contract at `d=512`, 8 routed + 1 shared expert, expert width 1152, MQA KV
+width 64, and a 32k vocabulary: **99,054,096 parameters**. The
+`loced_100m_tpu8.yml` run config uses 8-way data parallelism,
+`per_device_batch_size=32`, and `max_target_length=128` (32,768 tokens per
+global step).
+
+`LoCED_MaxText_100M_TPU8_HF_Kaggle.ipynb` and
+`kernel-metadata-100m-tpu8.json` run this on Kaggle TPU v5e-8. The two-step
+benchmark passed on all 8 chips (99,054,096 parameters, finite loss,
+`optimizer_step == 2`, MaxText Muon) and wrote
+`kaggle_tpu8_100m_report.json`.
+
+The first full-pass attempt never reached step 1: `datasets` streaming with a
+10,000-example shuffle buffer was pulling random `tiny-webtext` parquet shards
+from the Hugging Face CDN, and a CDN read timeout stalled the data prefill for
+hours. The training log stopped at the retry, so the Kaggle run was cancelled.
+
+The notebook now mirrors all six datasets once with resumable
+`snapshot_download`, verifies the local parquet schemas, and sets
+`LOCED_HF_LOCAL_DATA` so training reads the local mirror. `hf_train.py`
+supports the same via `_local_dataset_files()` / `local_root`; the notebook
+also carries a compatibility shim for public checkouts that predate it. Set
+`LOCED_HF_LOCAL_DATA` to a directory containing one subdirectory per dataset
+name. Training still uses the rolling-token, all-source-token mixer; only the
+storage path changes.
+
 ---
 
 ## 8. Environment notes and limitations
