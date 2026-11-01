@@ -119,15 +119,28 @@ unchanged.
 The custom class is `loced.maxtext.config.LoCEDMaxTextConfig`, a subclass of
 `MaxTextConfig`. It adds only the fields MaxText has no equivalent for
 (`loced_pool_m`, `loced_window`, `loced_top_k`, indexer dimensions, the visit
-schedule, auxiliary-loss weights). It also widens `model_name` from MaxText's
-built-in model enum to a string so `models/loced-tiny.yml` can be resolved by
-the normal MaxText YAML lookup.
+schedule, auxiliary-loss weights, and the Phase 1 fidelity switches). It also
+widens `model_name` from MaxText's built-in model enum to a string so
+`models/loced-tiny.yml` can be resolved by the normal MaxText YAML lookup.
+
+The fidelity switches default to the implemented behavior:
+
+| field | default | meaning |
+|---|---|---|
+| `loced_pool_norm_preserve` | `True` | rescale pooled K/V to constituent mean norm (D1) |
+| `loced_lazy_view` | `True` | segment scoring/gather without a `[B,T,C,w]` view (D6) |
+| `loced_train_delta` | `True` | train with the simulated `pool \| delta \| ring` view (D3) |
+| `loced_train_prefill_frac` | `0.5` | prompt fraction of each training sequence |
+| `loced_reuse_onpolicy` | `True` | let REUSE consume the learned indexer selection |
+| `loced_reuse_warmup_frac` | `0.2` | oracle-only fraction before on-policy REUSE |
+| `loced_reuse_ramp_frac` | `0.3` | oracle -> indexer ramp length |
 
 Shipped configs:
 
 ```
-loced/maxtext/configs/loced_tiny.yml          # run/optimizer/mesh settings
-loced/maxtext/configs/models/loced-tiny.yml   # architecture
+loced/maxtext/configs/loced_tiny.yml            # run/optimizer/mesh settings
+loced/maxtext/configs/models/loced-tiny.yml     # architecture
+loced/maxtext/configs/loced_100m_4k_tpu8.yml    # 4k gate, primary v5e-8 target
 ```
 
 Initialize exactly like MaxText:
@@ -155,8 +168,10 @@ python -m loced.maxtext.train \
 ```
 
 The entry point uses MaxText's mesh, LR schedule and Muon optimizer, then runs
-a jitted `nnx.value_and_grad` step on `LoCEDModel.train_loss`. Checkpoints use
-Orbax and are written under `checkpoint_dir` (MaxText derives it from
+a jitted `nnx.value_and_grad` step on `LoCEDModel.train_loss`. The trainer
+computes the on-policy REUSE schedule from `loced_reuse_warmup_frac` /
+`loced_reuse_ramp_frac` and passes `reuse_p` into the jitted step. Checkpoints
+use Orbax and are written under `checkpoint_dir` (MaxText derives it from
 `base_output_directory` / `run_name` when checkpointing is enabled). The
 optimizer's internal `step` is the resume cursor: a run with the same
 `base_output_directory` / `run_name` restores the model and optimizer state
@@ -203,11 +218,16 @@ Current results on the tiny config (549,456 parameters):
 | Orbax save/restore | model + optimizer state + `optimizer.step` exact |
 | trainer resume | run 2 steps, restore, continue to step 3 |
 | real MaxText utilities | enforced with `LOCED_REQUIRE_REAL_MAXTEXT_UTILS=1` |
-| reference smoke suite | 19 passed |
+| reference smoke suite | 28 passed |
+| reference diagnostics | segment mass, recall@L, train/decode KL, chunk parity, on-policy REUSE |
 
 The MaxText integration suite currently has 15 tests. The YAML test initializes
 the shipped `loced-tiny` config through MaxText's real `pyconfig` and maps it to
-`LoCEDConfig`.
+`LoCEDConfig`. The Phase 1 fidelity switches are defaulted in
+`loced_config_from_maxtext` / `loced_config_from_mapping`, so existing YAMLs
+pick them up without edits. This workstation does not have Flax/MaxText
+installed, so the new switches were exercised through the pure-JAX suite; the
+MaxText parity suite and TPU gate must be rerun in the MaxText environment.
 
 ### Cloud validation notebooks
 
@@ -348,7 +368,14 @@ contract at `d=512`, 8 routed + 1 shared expert, expert width 1152, MQA KV
 width 64, and a 32k vocabulary: **99,054,096 parameters**. The
 `loced_100m_tpu8.yml` run config uses 8-way data parallelism,
 `per_device_batch_size=32`, and `max_target_length=128` (32,768 tokens per
-global step).
+global step). It stays frozen until the 4k gate passes.
+
+The gate config is `loced_100m_4k_tpu8.yml`: the same 100M shape, 4,096-token
+sequences, `window=128`, `top_k=128`, one sequence per chip (8 per global
+step), lazy segment views, delta simulation, and on-policy REUSE. The gate is
+fit + finite loss + the M0 diagnostics; it is not a full training pass. If
+exact pass-A attention makes the gate fail, Phase 2 (causal sparse encode)
+moves ahead of the full 4k run.
 
 `LoCED_MaxText_100M_TPU8_HF_Kaggle.ipynb` and
 `kernel-metadata-100m-tpu8.json` run this on Kaggle TPU v5e-8. The two-step

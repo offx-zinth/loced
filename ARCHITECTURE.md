@@ -107,9 +107,14 @@ the shared store (CED: `C_l = H_{L/2} W_l^{KV}`, here one shared bridge pair
 
 | store segment | written by | contents | compression |
 |---|---|---|---|
-| `pool` (prompt) | prefill bridge from `H_out` | mean of `pool_m = 2` consecutive `H_out` projections | m = 2 |
+| `pool` (prompt) | prefill bridge from `H_out` | norm-preserving mean of `pool_m = 2` consecutive `H_out` projections | m = 2 |
 | `delta` pool (generated) | decode pass-A exit hidden (same `W_bk/W_bv` bridge) | m = 1 per token | m = 1 |
 | `ring` (exact window) | ring protocol | last `window` exact entries (prompt tail + generated) | m = 1 |
+
+Pooling is **norm-preserving** (`cfg.pool_norm_preserve=True`): each pooled
+K/V row is rescaled to the mean norm of its `pool_m` constituents. Without the
+rescale, a mean pool shrinks rows by roughly `1/sqrt(pool_m)`, so the softmax
+systematically demotes compressed history (diagnostic D1).
 
 Ring protocol on append: if the ring is full, its **oldest entry is archived
 into the delta pool**, everything shifts, the new entry enters at the tail —
@@ -132,14 +137,18 @@ per-layer global KV at all (all 8 visits share the same store).
 Single teacher-forced sequence, exactly mirroring the two inference passes:
 
 1. **pass A** — the 4 `full` layers with exact causal attention (= oracle).
-2. **KV bridge from `H_out`** — pool groups (`pool_m`) + per-position window
-   rows; the candidate view carries the *same shape of evidence* decode will
-   have (store rows: pool / window / delta). Positions covered by the window
+2. **KV bridge from `H_out`** — the first `train_prefill_frac` positions form
+   the prompt pool (`pool_m` groups); the remaining positions simulate the
+   generated span. The training candidate view is canonically
+   `pool | delta | ring`: delta rows are the archived positions that have left
+   the ring, and their validity (`delta_last <= t - window`) matches the real
+   prefill+decode store. Positions represented by exact rows (delta or ring)
    are excluded from pool-group oracle mass (non-overlapping union).
 3. **pass B** — `[REUSE, REUSE, REINDEX, REINDEX]` over that view. The two
-   REUSE layers inherit the rows the oracle selected (teacher forcing); the
-   two REINDEX layers use the learned indexer with the hierarchical block
-   restriction, so the trained selection rule == the deployed selection rule.
+   REINDEX layers use the learned indexer with the hierarchical block
+   restriction. REUSE starts on oracle rows and ramps to the learned indexer's
+   selection (`reuse_p`: 0 = oracle, 1 = indexer). This on-policy schedule is
+   mandatory because inference never uses the oracle selector.
 4. **Indexer distillation at all three scoring hiddens** (the pass-A exit
    hidden and the two REINDEX hiddens), stop-gradient isolated.
 
@@ -163,6 +172,9 @@ indexer gradients (asserted in `test_indexer_gradients`).
 | hidden / heads × head_dim | 64 / 4×16 | 2048–3072 / 32–64 × 64–128 |
 | kv_dim (MQA) | 16 | = head_dim |
 | pool_m | 2 | 2 (prompt), 1 (delta) |
+| pool_norm_preserve / lazy_view | True / True | True / True |
+| train_delta / train_prefill_frac | True / 0.5 | True / 0.5 |
+| reuse_onpolicy / warmup / ramp | True / 0.2 / 0.3 | True / 0.2 / 0.3 |
 | window | 16 | 128 |
 | top_k | 16 | 512 |
 | indexer | 2 heads × 32 | 32 heads × 128 |
@@ -180,11 +192,14 @@ loced/
   fnn.py           # DeepSeek-style MoE (shared + routed SwiGLU)
   block.py         # the physical layer stack (visit = norm + attn + gate + MoE + gate)
   model.py         # init / forward_train / prefill / prefill_extend / decode_step
+  diagnostics.py   # segment mass, recall@L, train/decode KL, baseline artifacts
   train.py         # optax jitted train step + tiny-config smoke run
   smoke_test.py    # pytest suite (shapes, causality, jit, cache, distill, train)
 ```
 
 Run tests: `python3.11 -m pytest loced/smoke_test.py -q`
+Run diagnostics/baseline:
+`python3.11 -m loced.diagnostics --steps 150 --out loced/validation/diagnostics_baseline.json`
 Run MaxText integration tests: `python -m pytest loced/maxtext/test_integration.py -q`
 Run smoke train: `python3.11 -m loced.train`
 
