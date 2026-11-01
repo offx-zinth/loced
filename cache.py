@@ -72,6 +72,32 @@ def project_entries(cfg, H: jax.Array, Wk, Wv, Wz):
     return k, v, k @ Wz.astype(H.dtype)           # ik = KV @ Wz  (CSA2)
 
 
+def pool_kv(cfg, k: jax.Array, v: jax.Array):
+    """Mean-pool consecutive KV entries, optionally preserving their norm.
+
+    Mean pooling shrinks a group of independent vectors by ~1/sqrt(pool_m).
+    That makes pooled rows systematically smaller than exact rows, so the
+    softmax demotes the compressed store (D1). With
+    `cfg.pool_norm_preserve`, each pooled row is rescaled to the mean norm of
+    its constituents. The same helper is used by training and inference.
+    """
+    B, T, _ = k.shape
+    m = cfg.pool_m
+    assert T % m == 0, "pool length must be a multiple of pool_m"
+    P = T // m
+    gk = k[:, : P * m, :].reshape(B, P, m, -1)
+    gv = v[:, : P * m, :].reshape(B, P, m, -1)
+    pool_k = gk.mean(axis=2)
+    pool_v = gv.mean(axis=2)
+    if cfg.pool_norm_preserve:
+        eps = cfg.pool_norm_eps
+        nk = jnp.linalg.norm(gk, axis=-1).mean(axis=-1)
+        nv = jnp.linalg.norm(gv, axis=-1).mean(axis=-1)
+        pool_k = pool_k * (nk / (jnp.linalg.norm(pool_k, axis=-1) + eps))[..., None]
+        pool_v = pool_v * (nv / (jnp.linalg.norm(pool_v, axis=-1) + eps))[..., None]
+    return pool_k, pool_v
+
+
 def build_pool(cfg, store: dict, H_out: jax.Array, pos: jax.Array,
                Wk, Wv, Wz) -> dict:
     """KV Bridging: pool_m consecutive H_out entries -> one pool entry.
@@ -85,8 +111,7 @@ def build_pool(cfg, store: dict, H_out: jax.Array, pos: jax.Array,
     assert T % m == 0, "prefill length must be a multiple of pool_m"
     P = T // m
     k, v, _ = project_entries(cfg, H_out, Wk, Wv, Wz)
-    gk = k[:, : P * m, :].reshape(B, P, m, -1).mean(axis=2)       # [B,P,kv]
-    gv = v[:, : P * m, :].reshape(B, P, m, -1).mean(axis=2)
+    gk, gv = pool_kv(cfg, k, v)                              # [B,P,kv]
     group_last = pos[:, m - 1: P * m: m]                         # [B,P]
     bidx = jnp.arange(B)[:, None]
     old_n = store["pool_n"][0]                     # batched turns share length

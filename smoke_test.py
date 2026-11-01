@@ -5,6 +5,9 @@ Run:  python3.11 -m pytest loced/smoke_test.py -q
 
 from __future__ import annotations
 
+import dataclasses
+import json
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -12,8 +15,11 @@ import pytest
 
 from .cache import new_store
 from .config import LoCEDConfig
-from .model import (count_params, decode_step, forward_train, generate,
-                    init_model, prefill)
+from .diagnostics import (build_report, pool_norm_ratio, segment_layout,
+                          segment_mass, selection_summary,
+                          train_decode_kl_report)
+from .model import (count_params, decode_step, forward_train,
+                    forward_train_diagnostics, generate, init_model, prefill)
 from .muon import (ADAMW, MUON, MUON_EXPERT, make_muon_mask, muon_adamw,
                    orthogonalize)
 from .train import make_train_step, synthetic_batch, tiny_config, train_smoke
@@ -321,3 +327,205 @@ def test_decode_after_extend(params):
     token = jnp.asarray([0])
     store, logits3 = decode_step(CFG, params, store, token, 32)
     assert np.isfinite(np.asarray(logits3)).all()
+
+
+# ---------------------------------------------------------------------------
+# Phase 0 diagnostics
+# ---------------------------------------------------------------------------
+
+def _diag_batch(batch=1, seq=None):
+    seq = CFG.max_seq_len if seq is None else seq
+    return synthetic_batch(np.random.default_rng(31), batch, seq,
+                           CFG.vocab_size)
+
+
+def test_diagnostics_segment_mass(params):
+    """Segment mass partitions the selected attention mass exactly.
+
+    Regression for the original measurement bug: `attend` now returns
+    `[B,T,H,L]`, so the `[B,T,1,L]` segment mask broadcasts over heads.
+    """
+    tokens = _diag_batch(2)
+    out = forward_train_diagnostics(CFG, params, tokens)
+    layout = segment_layout(out["view"])
+    Tp = int(round(CFG.max_seq_len * CFG.train_prefill_frac))
+    Tp = (Tp // CFG.pool_m) * CFG.pool_m
+    assert layout.n_pool == Tp // CFG.pool_m
+    assert layout.n_delta > 0
+    assert layout.n_win == CFG.window
+    assert len(out["visit_infos"]) == len(CFG.sparse_layers) == 4
+    assert "rows_k" not in out["view"]          # lazy view: no [B,T,C,w]
+    for info in out["visit_infos"]:
+        mass = segment_mass(info["probs"], info["idx"], layout)
+        total = sum(mass.values())
+        np.testing.assert_allclose(np.asarray(total), 1.0, rtol=1e-5,
+                                   atol=1e-5)
+        assert info["probs"].shape[:2] == info["idx"].shape[:2]
+
+
+def test_diagnostics_selection_metrics(params):
+    """Recall/overlap are bounded and segment shares sum to one."""
+    tokens = _diag_batch()
+    out = forward_train_diagnostics(CFG, params, tokens)
+    layout = segment_layout(out["view"])
+    summary = selection_summary(out["idx_oracle"], out["idx_indexer"], layout)
+    assert 0.0 <= summary["recall_at_L"] <= 1.0
+    assert 0.0 <= summary["jaccard"] <= 1.0
+    for side in ("oracle", "indexer"):
+        assert abs(sum(summary[side].values()) - 1.0) < 1e-6
+    ratio = pool_norm_ratio(out["pool_k"], out["per_token_k"], CFG.pool_m)
+    Tp = int(round(CFG.max_seq_len * CFG.train_prefill_frac))
+    Tp = (Tp // CFG.pool_m) * CFG.pool_m
+    assert ratio.shape == (tokens.shape[0], Tp // CFG.pool_m)
+    assert np.isfinite(np.asarray(ratio)).all()
+    # 1.1: norm-preserving pooling keeps the pooled rows at constituent scale.
+    assert 0.98 < float(ratio.mean()) < 1.02
+
+
+def test_train_decode_kl_report(params):
+    """Teacher-forced decode through the real store runs and aligns."""
+    tokens = _diag_batch(1, 32)
+    report = train_decode_kl_report(CFG, params, tokens, prefill_len=16)
+    assert np.isfinite(report["kl"]) and report["kl"] >= 0.0
+    assert 0.0 <= report["top1_agreement"] <= 1.0
+    assert report["n_positions"] == 16
+    assert report["prefill_len"] == 16
+
+
+def test_diagnostics_report_json_roundtrip(params, tmp_path):
+    """The report contains the D1-D5 fields and is JSON serializable."""
+    tokens = _diag_batch(1, 32)
+    report = build_report(CFG, params, tokens, prefill_len=16)
+    assert set(report) >= {"layout", "pool_norm_ratio", "selection",
+                           "visits", "train_decode"}
+    assert len(report["visits"]) == 4
+    path = tmp_path / "report.json"
+    from .diagnostics import write_report
+    write_report(path, report)
+    loaded = json.loads(path.read_text())
+    assert loaded["layout"]["n_pool"] == 8     # seq 32 -> prefill 16 -> P=8
+    assert loaded["layout"]["n_delta"] == 32
+    assert len(loaded["visits"]) == 4
+
+
+def test_chunked_pass_b_matches_full(params):
+    """M0.5: query-chunked pass B is numerically equivalent to the full pass."""
+    tokens = _diag_batch(2, 32)
+    full = forward_train(CFG, params, tokens)
+    for chunk in (4, 8, 16):
+        part = forward_train(CFG, params, tokens, query_chunk_size=chunk)
+        np.testing.assert_allclose(float(part["loss"]), float(full["loss"]),
+                                   rtol=1e-4, atol=1e-4)
+        np.testing.assert_allclose(np.asarray(part["logits"]),
+                                   np.asarray(full["logits"]),
+                                   rtol=1e-4, atol=1e-4)
+
+
+def test_onpolicy_reuse_uses_indexer_selection(params):
+    """1.3: reuse_p=0 uses oracle rows, reuse_p=1 uses indexer rows."""
+    tokens = _diag_batch(1, 32)
+    oracle = forward_train_diagnostics(CFG, params, tokens, prefill_len=16,
+                                       reuse_p=0.0)
+    indexer = forward_train_diagnostics(CFG, params, tokens, prefill_len=16,
+                                        reuse_p=1.0)
+    for info in oracle["visit_infos"]:
+        if info["mode"] == "reuse":
+            np.testing.assert_array_equal(np.asarray(info["idx"]),
+                                          np.asarray(oracle["idx_oracle"]))
+    for info in indexer["visit_infos"]:
+        if info["mode"] == "reuse":
+            np.testing.assert_array_equal(np.asarray(info["idx"]),
+                                          np.asarray(indexer["idx_indexer"]))
+    summary = selection_summary(oracle["idx_oracle"], oracle["idx_indexer"],
+                                segment_layout(oracle["view"]))
+    assert summary["recall_at_L"] >= 0.0
+
+
+def test_prefill_extend_lazy_matches_dense(params):
+    """M3.1 store view: lazy pool/delta/ring matches the materialized view."""
+    from .model import prefill_extend
+
+    prompt = synthetic_batch(np.random.default_rng(21), 1, 16, CFG.vocab_size)
+    turn2 = synthetic_batch(np.random.default_rng(22), 1, 16, CFG.vocab_size)
+    lazy_cfg = dataclasses.replace(CFG, lazy_view=True)
+    dense_cfg = dataclasses.replace(CFG, lazy_view=False)
+    s_lazy, _ = prefill(lazy_cfg, params, prompt)
+    s_dense, _ = prefill(dense_cfg, params, prompt)
+    s_lazy, logits_lazy = prefill_extend(
+        lazy_cfg, params, s_lazy, turn2, pos0=16)
+    s_dense, logits_dense = prefill_extend(
+        dense_cfg, params, s_dense, turn2, pos0=16)
+    np.testing.assert_allclose(np.asarray(logits_lazy),
+                               np.asarray(logits_dense),
+                               rtol=1e-5, atol=1e-5)
+    for key in ("pool_k", "delta_k", "ring_k", "block_key"):
+        np.testing.assert_allclose(np.asarray(s_lazy[key]),
+                                   np.asarray(s_dense[key]),
+                                   rtol=1e-5, atol=1e-5)
+
+
+def test_lazy_view_matches_materialized(params):
+    """M3.1: segment scoring/gather matches the materialized candidate view."""
+    tokens = _diag_batch(2, 32)
+    lazy_cfg = dataclasses.replace(CFG, lazy_view=True)
+    dense_cfg = dataclasses.replace(CFG, lazy_view=False)
+    lazy = forward_train(lazy_cfg, params, tokens)
+    dense = forward_train(dense_cfg, params, tokens)
+    np.testing.assert_allclose(np.asarray(lazy["logits"]),
+                               np.asarray(dense["logits"]),
+                               rtol=1e-5, atol=1e-5)
+    np.testing.assert_allclose(float(lazy["loss"]), float(dense["loss"]),
+                               rtol=1e-5, atol=1e-5)
+    # And the lazy path stays correct under query chunking.
+    chunked = forward_train(lazy_cfg, params, tokens, query_chunk_size=8)
+    np.testing.assert_allclose(np.asarray(chunked["logits"]),
+                               np.asarray(dense["logits"]),
+                               rtol=1e-4, atol=1e-4)
+
+
+def test_train_delta_layout_matches_decode_store(params):
+    """1.2: the training store layout matches the real prefill+decode store.
+
+    Values can differ (training pass A sees the full teacher-forced prefix;
+    decode pass A is T=1), but segment validity and source positions must be
+    identical at every generated position.
+    """
+    from .attention import assemble_store_view
+
+    tokens = _diag_batch(1)
+    Tp = 32
+    out = forward_train_diagnostics(CFG, params, tokens, prefill_len=Tp)
+    view = out["view"]
+    P, D, W = view["n_pool"], view["n_delta"], view["n_win"]
+    assert P == Tp // CFG.pool_m and D > 0 and W == CFG.window
+
+    store, _ = prefill(CFG, params, tokens[:, :Tp])
+    jdec = jax.jit(lambda s, tok, pos: decode_step(CFG, params, s, tok, pos))
+    for t in range(Tp - 1, tokens.shape[1]):
+        if t >= Tp:
+            store, _ = jdec(store, tokens[:, t], t)
+        sv = assemble_store_view(CFG, store, t)
+
+        # Training side: source positions of every valid segment row.
+        pv = np.asarray(view["valid"][0, t, :P])
+        train_pool = set(np.asarray(out["pool_last"][0, :P])[pv].tolist())
+        dv = np.asarray(view["valid"][0, t, P:P + D])
+        train_delta = set(np.asarray(view["delta_src_pos"][0, t])[dv].tolist())
+        rv = np.asarray(view["valid"][0, t, P + D:])
+        train_ring = set(np.asarray(view["src_pos"][0, t])[rv].tolist())
+
+        # Decode side: the real store at the same query position. The store's
+        # pool capacity is `max_seq_len // pool_m`, larger than the training
+        # prompt pool; only validity/source positions are compared.
+        sP, sD = sv["n_pool"], sv["n_delta"]
+        spv = np.asarray(sv["valid"][0, 0, :sP])
+        store_pool = set(np.asarray(store["pool_last"][0, :sP])[spv].tolist())
+        sdv = np.asarray(sv["valid"][0, 0, sP:sP + sD])
+        store_delta = set(
+            np.asarray(store["delta_last"][0, :sD])[sdv].tolist())
+        srv = np.asarray(sv["valid"][0, 0, sP + sD:])
+        store_ring = set(np.asarray(store["ring_pos"][0])[srv].tolist())
+
+        assert train_pool == store_pool, f"pool mismatch at t={t}"
+        assert train_delta == store_delta, f"delta mismatch at t={t}"
+        assert train_ring == store_ring, f"ring mismatch at t={t}"

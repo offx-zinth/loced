@@ -94,9 +94,12 @@ def attend(q, K, V, valid_sel):
     scale = q.shape[-1] ** -0.5
     logits = jnp.einsum("bthd,btld->bhtl", q, K) * scale
     logits = logits + jnp.where(valid_sel[:, None, :, :], 0.0, NEG)
-    probs = jax.nn.softmax(logits, axis=-1)
+    probs = jax.nn.softmax(logits, axis=-1)          # [B,H,T,L]
     out = jnp.einsum("bhtl,btld->bthd", probs, V)
-    return out.reshape(q.shape[0], q.shape[1], -1), probs
+    # Public contract is [B,T,H,L] (head axis after the query axis), so the
+    # diagnostics harness can broadcast a [B,T,1,L] segment mask directly.
+    return (out.reshape(q.shape[0], q.shape[1], -1),
+            jnp.transpose(probs, (0, 2, 1, 3)))
 
 
 def gather_by_idx(rows, idx):
@@ -107,6 +110,135 @@ def gather_by_idx(rows, idx):
         return jnp.take_along_axis(rows, idx[..., None], axis=2)
     oh = jax.nn.one_hot(idx, rows.shape[1], dtype=rows.dtype)
     return jnp.einsum("btlc,bcw->btlw", oh, rows)
+
+
+def view_n_candidates(view: dict) -> int:
+    """Candidate count for either a materialized or lazy train view."""
+    if "n_candidates" in view:
+        return int(view["n_candidates"])
+    return int(view["rows_k"].shape[2])
+
+
+def view_n_queries(view: dict) -> int:
+    """Query count for either a materialized or lazy train view."""
+    if "n_queries" in view:
+        return int(view["n_queries"])
+    return int(view["rows_k"].shape[1])
+
+
+def _gather_segment(seg, idx, offset: int):
+    """Gather one segment's rows for global candidate indices `idx`."""
+    B, T, L = idx.shape
+    if seg is None or seg.shape[-2] == 0:
+        return jnp.zeros((B, T, L, 0 if seg is None else seg.shape[-1]),
+                         jnp.float32 if seg is None else seg.dtype)
+    S = seg.shape[-2]
+    local = jnp.clip(idx - offset, 0, S - 1)
+    if seg.ndim == 3:
+        # Shared [B,S,w] segment: gather per batch to [B,Tq,L,w]. Do NOT
+        # broadcast to [B,Tq,S,w] first; that reintroduces the pool-sized
+        # allocation this lazy view is meant to remove.
+        out = jnp.stack(
+            [jnp.take(seg[b], local[b], axis=0) for b in range(B)], axis=0)
+    else:
+        out = jnp.take_along_axis(seg, local[..., None], axis=2)
+    valid = (idx >= offset) & (idx < offset + S)
+    return jnp.where(valid[..., None], out, jnp.zeros_like(out))
+
+
+def gather_view(view: dict, idx, kind: str = "k"):
+    """Gather selected rows from a materialized or lazy candidate view.
+
+    `kind` is one of ``k``, ``v``, ``ik``. Lazy views keep the pool/delta rows
+    shared and only the ring rows per-query, so this never allocates
+    `[B,T,C,w]`; it gathers `[B,T,L,w]` from each segment and sums the
+    disjoint segment masks.
+    """
+    if not view.get("lazy", False):
+        key = {"k": "rows_k", "v": "rows_v", "ik": "rows_ik"}[kind]
+        return gather_by_idx(view[key], idx)
+    if kind == "k":
+        segs = ((view["pool_k"], 0),
+                (view.get("delta_k"), view["n_pool"]),
+                (view["win_k"], view["n_pool"] + view["n_delta"]))
+    elif kind == "v":
+        segs = ((view["pool_v"], 0),
+                (view.get("delta_v"), view["n_pool"]),
+                (view["win_v"], view["n_pool"] + view["n_delta"]))
+    else:
+        segs = ((view["pool_ik"], 0),
+                (view.get("delta_ik"), view["n_pool"]),
+                (view["win_ik"], view["n_pool"] + view["n_delta"]))
+    dtype = next(seg for seg, _ in segs if seg is not None).dtype
+    out = jnp.zeros((idx.shape[0], idx.shape[1], idx.shape[2],
+                     next(seg for seg, _ in segs if seg is not None).shape[-1]),
+                    dtype)
+    for seg, offset in segs:
+        if seg is not None and seg.shape[-2] > 0:
+            out = out + _gather_segment(seg, idx, offset)
+    return out
+
+
+def gather_selected(view: dict, idx):
+    """Gather only the selected K/V rows from a candidate view."""
+    return gather_view(view, idx, "k"), gather_view(view, idx, "v")
+
+
+def indexer_scores_view(cfg: LoCEDConfig, p: dict, h, view: dict):
+    """Indexer logits for a materialized or lazy candidate view.
+
+    Lazy views score each segment independently; the result is the same
+    concatenated `[B,Tq,C]` logits as scoring the materialized rows.
+    """
+    if not view.get("lazy", False):
+        return indexer_logits(cfg, p, h, view["rows_ik"])
+    Wq = p["W_iq"].reshape(cfg.hidden_size, cfg.indexer_heads,
+                           cfg.indexer_dim)
+    qi = jnp.einsum("btd,dhi->bthi", h, Wq)
+    parts = []
+    for seg in (view["pool_ik"], view.get("delta_ik"), view["win_ik"]):
+        if seg is None or seg.shape[-2] == 0:
+            continue
+        if seg.ndim == 3:
+            s = jnp.einsum("bthi,bsi->bhts", qi, seg)
+        else:
+            s = jnp.einsum("bthi,btci->bhtc", qi, seg)
+        parts.append(s.mean(axis=1))
+    return jnp.concatenate(parts, axis=2)
+
+
+def iter_query_chunks(n_queries: int, chunk_size: int | None):
+    """Static `(start, stop)` query chunks for training / prefill.
+
+    `None` or a size >= n_queries yields one chunk, preserving the original
+    full-query path.
+    """
+    if chunk_size is None or chunk_size <= 0 or chunk_size >= n_queries:
+        yield (0, n_queries)
+        return
+    for start in range(0, n_queries, chunk_size):
+        yield (start, min(start + chunk_size, n_queries))
+
+
+def slice_view(view: dict, start: int, stop: int) -> dict:
+    """Slice the per-query axis of a candidate view (axis 1).
+
+    Segment metadata (`n_pool`, `n_delta`, `n_win`, `n_hier`) is query
+    independent and is preserved. Shared pool/block arrays are not touched.
+    """
+    out = dict(view)
+    n_q = view_n_queries(view)
+    # Shared segment arrays are query-independent even when their length
+    # happens to equal the query count (e.g. delta length == T in tiny runs).
+    shared = {"pool_k", "pool_v", "pool_ik",
+              "delta_k", "delta_v", "delta_ik",
+              "n_pool", "n_delta", "n_win", "n_hier",
+              "n_candidates", "n_queries", "lazy"}
+    for key, value in view.items():
+        if (hasattr(value, "ndim") and value.ndim >= 2
+                and value.shape[1] == n_q and key not in shared):
+            out[key] = value[:, start:stop]
+    return out
 
 
 def indexer_logits(cfg: LoCEDConfig, p: dict, h, cand_ik):
@@ -221,16 +353,22 @@ def _block_arrays(cfg: LoCEDConfig, pool_ik, pool_last, NB: int):
 
 def assemble_train_view(cfg: LoCEDConfig, pool_k, pool_v, pool_ik, pool_last,
                         buf_k, buf_v, buf_ik, positions,
-                        block_key=None, block_last=None, n_hier=None):
+                        block_key=None, block_last=None, n_hier=None,
+                        delta_k=None, delta_v=None, delta_ik=None,
+                        delta_pos=None, delta_query_start: int = 0,
+                        lazy: bool = False):
     """Training candidate view over the bridged store (pass-2 visits).
 
-    pool_*: [B,P,*] bridged pool entries (or store pool + ring, for multi-turn
-    extension); buf_*: [B,T,*] per-position bridge projections (trailing
-    window rows). positions: [B,T]. `n_hier` leading pool entries are subject
-    to hierarchical block restriction (the rest never are).
+    pool_*: [B,P,*] bridged pool entries; buf_*: [B,T,*] per-position bridge
+    projections (trailing window rows). positions: [B,T]. `n_hier` leading
+    pool entries are subject to hierarchical block restriction.
 
-    Segments per query: pool entries (valid iff 0 <= pool_last <= t-1) and the
-    trailing exact window rows [t-window+1 .. t] (always valid, force-boosted).
+    Canonical segment order is `pool | delta | ring` (the same order as
+    `assemble_store_view`). The optional delta rows are the first archived
+    m=1 entries of the simulated generation span; they become valid at
+    `delta_query_start` (the first generated query position) and for positions
+    `delta_pos <= t`. Without delta arguments the function keeps the original
+    pool + window layout.
     """
     B, T, _ = buf_k.shape
     P = pool_k.shape[1]
@@ -243,13 +381,45 @@ def assemble_train_view(cfg: LoCEDConfig, pool_k, pool_v, pool_ik, pool_last,
     win_i, _, _ = trailing_rows(buf_ik, cfg.window)
     valid_pool = (pool_last >= 0)[:, None, :] & \
                  (pool_last[:, None, :] <= positions[:, :, None] - 1)
-    rows_k = jnp.concatenate([pool_rows_k, win_k], axis=2)
-    rows_v = jnp.concatenate([pool_rows_v, win_v], axis=2)
-    rows_ik = jnp.concatenate([pool_rows_i, win_i], axis=2)
-    valid = jnp.concatenate([valid_pool, win_valid], axis=2)
-    boost = jnp.concatenate([
-        jnp.zeros((B, T, P), jnp.float32),
-        win_valid.astype(jnp.float32)], axis=2)
+
+    parts_k = [pool_rows_k]
+    parts_v = [pool_rows_v]
+    parts_i = [pool_rows_i]
+    parts_valid = [valid_pool]
+    parts_boost = [jnp.zeros((B, T, P), jnp.float32)]
+    D = 0
+    delta_src = jnp.zeros((B, T, 0), jnp.int32)
+    if delta_k is not None:
+        if delta_pos is None:
+            raise ValueError("delta_pos is required with delta_k")
+        D = delta_k.shape[1]
+        if delta_v is None or delta_ik is None:
+            raise ValueError("delta_v and delta_ik are required with delta_k")
+        dk = jnp.broadcast_to(delta_k[:, None], (B, T, D, delta_k.shape[2]))
+        dv = jnp.broadcast_to(delta_v[:, None], (B, T, D, delta_v.shape[2]))
+        di = jnp.broadcast_to(delta_ik[:, None], (B, T, D, delta_ik.shape[2]))
+        dpos = jnp.broadcast_to(jnp.asarray(delta_pos, jnp.int32)[None, None, :],
+                                (B, T, D))
+        # Archived rows are exactly the positions that have left the ring:
+        # ring covers [t-window+1 .. t], delta covers the older tail.
+        valid_delta = ((positions[:, :, None] >= delta_query_start)
+                       & (dpos <= positions[:, :, None] - cfg.window)
+                       & (dpos >= 0))
+        parts_k.append(dk)
+        parts_v.append(dv)
+        parts_i.append(di)
+        parts_valid.append(valid_delta)
+        parts_boost.append(jnp.zeros((B, T, D), jnp.float32))
+        delta_src = dpos
+
+    parts_k.append(win_k)
+    parts_v.append(win_v)
+    parts_i.append(win_i)
+    parts_valid.append(win_valid)
+    parts_boost.append(win_valid.astype(jnp.float32))
+    valid = jnp.concatenate(parts_valid, axis=2)
+    boost = jnp.concatenate(parts_boost, axis=2)
+
     if block_key is None:
         NB = n_pool_blocks(cfg, P)
         bkey, blast = _block_arrays(cfg, pool_ik, pool_last, NB)
@@ -258,15 +428,29 @@ def assemble_train_view(cfg: LoCEDConfig, pool_k, pool_v, pool_ik, pool_last,
     NB = bkey.shape[1]
     block_key = jnp.broadcast_to(bkey[:, None], (B, T, NB, bkey.shape[2]))
     block_last = jnp.broadcast_to(blast[:, None], (B, T, NB))
-    return dict(
-        rows_k=rows_k, rows_v=rows_v, rows_ik=rows_ik, valid=valid,
-        boost=boost, n_pool=P, n_hier=n_hier, n_win=cfg.window,
+    out = dict(
+        valid=valid, boost=boost, n_pool=P, n_delta=D, n_own=D,
+        n_hier=n_hier, n_win=cfg.window,
+        n_candidates=P + D + cfg.window, n_queries=T, lazy=lazy,
         block_key=block_key, block_last=block_last,
         block_id=jnp.arange(P, dtype=jnp.int32) // cfg.indexer_block,
-        src_pos=src_pos, positions=positions[:, :, None])
+        src_pos=src_pos, delta_src_pos=delta_src,
+        positions=positions[:, :, None])
+    if lazy:
+        out.update(
+            pool_k=pool_k, pool_v=pool_v, pool_ik=pool_ik,
+            delta_k=delta_k, delta_v=delta_v, delta_ik=delta_ik,
+            win_k=win_k, win_v=win_v, win_ik=win_i)
+    else:
+        out.update(
+            rows_k=jnp.concatenate(parts_k, axis=2),
+            rows_v=jnp.concatenate(parts_v, axis=2),
+            rows_ik=jnp.concatenate(parts_i, axis=2))
+    return out
 
 
-def assemble_store_view(cfg: LoCEDConfig, store: dict, pos_q):
+def assemble_store_view(cfg: LoCEDConfig, store: dict, pos_q,
+                        lazy: bool = False):
     """Decode candidate view: pool + delta + ring, per query position.
 
     pos_q: scalar (one shared position), [B] (per-sequence position), or
@@ -294,15 +478,16 @@ def assemble_store_view(cfg: LoCEDConfig, store: dict, pos_q):
     def rows(x):
         return jnp.broadcast_to(x[:, None], (B, Tq) + x.shape[1:])
 
-    rows_k = jnp.concatenate(
-        [rows(store["pool_k"]), rows(store["delta_k"]), rows(store["ring_k"])],
-        axis=2)
-    rows_v = jnp.concatenate(
-        [rows(store["pool_v"]), rows(store["delta_v"]), rows(store["ring_v"])],
-        axis=2)
-    rows_ik = jnp.concatenate(
-        [rows(store["pool_ik"]), rows(store["delta_ik"]), rows(store["ring_ik"])],
-        axis=2)
+    if not lazy:
+        rows_k = jnp.concatenate(
+            [rows(store["pool_k"]), rows(store["delta_k"]),
+             rows(store["ring_k"])], axis=2)
+        rows_v = jnp.concatenate(
+            [rows(store["pool_v"]), rows(store["delta_v"]),
+             rows(store["ring_v"])], axis=2)
+        rows_ik = jnp.concatenate(
+            [rows(store["pool_ik"]), rows(store["delta_ik"]),
+             rows(store["ring_ik"])], axis=2)
     tq = pq1[:, :, None]                                     # [B,Tq,1]
     pool_last = store["pool_last"][:, None, :]               # [B,1,P]
     delta_last = store["delta_last"][:, None, :]
@@ -319,35 +504,62 @@ def assemble_store_view(cfg: LoCEDConfig, store: dict, pos_q):
         store["block_key"][:, None], (B, Tq) + store["block_key"].shape[1:])
     block_last = jnp.broadcast_to(
         store["block_last"][:, None], (B, Tq) + store["block_last"].shape[1:])
-    return dict(
-        rows_k=rows_k, rows_v=rows_v, rows_ik=rows_ik, valid=valid,
-        boost=boost, n_pool=P, n_hier=P, n_win=store["ring_k"].shape[1],
-        n_own=store["delta_k"].shape[1],
+    out = dict(
+        valid=valid, boost=boost, n_pool=P,
+        n_delta=store["delta_k"].shape[1], n_hier=P,
+        n_win=store["ring_k"].shape[1], n_own=store["delta_k"].shape[1],
+        n_candidates=P + store["delta_k"].shape[1] + store["ring_k"].shape[1],
+        n_queries=Tq, lazy=lazy,
         block_key=block_key, block_last=block_last,
         block_id=jnp.arange(P, dtype=jnp.int32) // cfg.indexer_block,
         positions=tq)
+    if lazy:
+        out.update(
+            pool_k=store["pool_k"], pool_v=store["pool_v"],
+            pool_ik=store["pool_ik"], delta_k=store["delta_k"],
+            delta_v=store["delta_v"], delta_ik=store["delta_ik"],
+            win_k=store["ring_k"], win_v=store["ring_v"],
+            win_ik=store["ring_ik"])
+    else:
+        out.update(rows_k=rows_k, rows_v=rows_v, rows_ik=rows_ik)
+    return out
 
 
 def oracle_scores(cfg: LoCEDConfig, view: dict, probs_mean):
     """Oracle (exact-attention) score for every candidate row of a train view.
 
-    Pool part: block-max aggregation over pool_m groups, EXCLUDING positions
-    inside the forced window (non-overlapping union semantics: a position is
-    either covered by the window or by a pool group, never both).
-    Window part: exact probs at the source positions.
-    Returns [B,T,C] probabilities in [0,1] (0 where a group is fully covered
-    by the window); callers apply validity masks.
+    Pool part: block-max aggregation over `pool_m` groups, excluding every
+    position that is represented exactly by the delta or ring segments
+    (non-overlapping union: a position is either in an exact row or in a pool
+    group). Delta part: exact probs at the delta source positions (valid rows
+    only). Ring part: exact probs at the trailing-window source positions.
+    Returns [B,T,C] probabilities in [0,1] in canonical `pool|delta|ring`
+    order; callers apply validity masks.
     """
     B, T, _ = probs_mean.shape
     m = cfg.pool_m
     assert T % m == 0, "train length must be a multiple of pool_m"
     P = view["n_pool"]
+    D = view.get("n_delta", 0)
     gm = T // m
-    # exclude window-covered positions from the pool aggregation
     pos_grid = jnp.arange(T, dtype=jnp.int32)[None, None, :]        # [1,1,T]
-    win_start = view["positions"] - cfg.window + 1                  # [B,T,1]
-    outside = pos_grid < win_start                                  # [B,T,T]
-    prob_ex = jnp.where(outside, probs_mean, -1.0)
+
+    # Exact rows: ring (always present) + valid delta rows.
+    ring_src = jnp.broadcast_to(view["src_pos"], (B, T, cfg.window))
+    if D:
+        delta_src = jnp.broadcast_to(view["delta_src_pos"], (B, T, D))
+        delta_valid = view["valid"][:, :, P:P + D]
+        delta_src = jnp.where(delta_valid, delta_src, -1)
+    else:
+        delta_src = jnp.zeros((B, T, 0), jnp.int32)
+    exact_src = jnp.concatenate([ring_src, delta_src.astype(jnp.int32)],
+                                axis=2)
+    exact = jnp.zeros((B, T, T), bool)
+    for i in range(exact_src.shape[2]):
+        p = exact_src[:, :, i]
+        exact = exact | ((pos_grid == p[:, :, None]) & (p[:, :, None] >= 0))
+
+    prob_ex = jnp.where(~exact, probs_mean, -1.0)
     grouped = prob_ex[:, :, : min(gm, P) * m].reshape(
         B, T, min(gm, P), m).max(axis=3)
     grouped = jnp.maximum(grouped, 0.0)
@@ -356,11 +568,19 @@ def oracle_scores(cfg: LoCEDConfig, view: dict, probs_mean):
             [grouped, jnp.zeros((B, T, P - gm), probs_mean.dtype)], axis=2)
     elif gm > P:
         grouped = grouped[:, :, :P]
-    pos = view["src_pos"]                                   # [1,T,window]
+
+    if D:
+        dpos = jnp.broadcast_to(view["delta_src_pos"], (B, T, D))
+        delta = jnp.take_along_axis(
+            probs_mean, jnp.clip(dpos, 0, T - 1), axis=2)
+        delta = jnp.where(view["valid"][:, :, P:P + D], delta, 0.0)
+    else:
+        delta = jnp.zeros((B, T, 0), probs_mean.dtype)
+    pos = jnp.broadcast_to(view["src_pos"], (B, T, cfg.window))
     win = jnp.take_along_axis(
         probs_mean, jnp.clip(pos, 0, T - 1), axis=2)
     win = jnp.where(pos >= 0, win, 0.0)
-    return jnp.concatenate([grouped, win], axis=2)
+    return jnp.concatenate([grouped, delta, win], axis=2)
 
 
 def block_entry_mask(cfg: LoCEDConfig, p: dict, h, view: dict,

@@ -34,6 +34,9 @@ class LoCEDConfig:
     head_dim: int = 32               # per-Q-head dim (NoPE throughout)
     kv_dim: int = 32                 # MQA: 1 KV head; invariant kv_dim == head_dim
     pool_m: int = 2                  # KV Bridging compression ratio (prompt entries)
+    pool_norm_preserve: bool = True  # rescale pooled K/V to constituent mean norm
+    pool_norm_eps: float = 1e-6      # epsilon for the norm-preserving pool scale
+    lazy_view: bool = True           # store segments, gather only selected rows
     window: int = 32                 # forced local window (recent tokens always selected)
     top_k: int = 32                  # token-level sparse budget on top of the window
     indexer_heads: int = 4
@@ -62,6 +65,11 @@ class LoCEDConfig:
     intermediate_size: int = 512     # per-expert SwiGLU hidden
 
     # --- training ---
+    train_delta: bool = True         # simulate the prompt -> generated delta store
+    train_prefill_frac: float = 0.5  # fraction of the sequence treated as prompt
+    reuse_onpolicy: bool = True      # let REUSE consume indexer-selected rows
+    reuse_warmup_frac: float = 0.2   # oracle-only fraction of training
+    reuse_ramp_frac: float = 0.3     # ramp from oracle to indexer selection
     aux_deep_weight: float = 0.10    # CE on the pass-1 exit (deep supervision)
     indexer_kl_coef: float = 0.50    # KL distill: oracle (exact attn) -> indexer
     moe_aux_weight: float = 0.01     # Switch-style load-balance auxiliary loss

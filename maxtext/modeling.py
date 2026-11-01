@@ -288,14 +288,16 @@ class LoCEDModel(nnx.Module):
     # ------------------------------------------------------------------
     # training
     # ------------------------------------------------------------------
-    def train_output(self, tokens: jax.Array) -> dict:
+    def train_output(self, tokens: jax.Array, reuse_p: float = 0.0) -> dict:
         """Reference training forward (loss components + logits)."""
-        return forward_train(self.cfg, self.to_reference_params(), tokens)
+        return forward_train(self.cfg, self.to_reference_params(), tokens,
+                             reuse_p=reuse_p)
 
-    def train_loss(self, tokens: jax.Array):
+    def train_loss(self, tokens: jax.Array, reuse_p: float = 0.0):
         """Return ``(total_loss, metrics)`` for a custom MaxText trainer."""
-        out = self.train_output(tokens)
+        out = self.train_output(tokens, reuse_p=reuse_p)
         metrics = {k: out[k] for k in ("loss", "ce", "ce_aux", "kl", "moe_aux")}
+        metrics["reuse_p"] = jnp.asarray(reuse_p, jnp.float32)
         return out["loss"], metrics
 
     def __call__(

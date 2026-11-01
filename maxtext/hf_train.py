@@ -373,6 +373,9 @@ def train_timed(
     last_step = start_step
     did_step = False
     schedule_steps = max(1, int(getattr(config, "learning_rate_schedule_steps", steps)))
+    warmup = int(steps * loced_cfg.reuse_warmup_frac) \
+        if loced_cfg.reuse_onpolicy else steps
+    ramp = max(1, int(steps * loced_cfg.reuse_ramp_frac))
     # Data-parallel input: global batch is sharded across the "data" mesh axis,
     # so each device sees per_device_batch_size examples.
     data_sharding = NamedSharding(mesh, P("data", None))
@@ -385,7 +388,9 @@ def train_timed(
             break
 
         tokens = jax.device_put(tokens, data_sharding)
-        loss, metrics = train_step(model, optimizer, tokens)
+        reuse_p = 0.0 if not loced_cfg.reuse_onpolicy else \
+            min(max((step - warmup) / ramp, 0.0), 1.0)
+        loss, metrics = train_step(model, optimizer, tokens, reuse_p=reuse_p)
         last_metrics = {k: float(v) for k, v in metrics.items()}
         last_step = step
         did_step = True
@@ -396,7 +401,8 @@ def train_timed(
             max_logging.log(
                 f"step {step:6d} loss {float(loss):.6f} "
                 f"ce {last_metrics.get('ce', 0):.6f} kl {last_metrics.get('kl', 0):.6f} "
-                f"moe_aux {last_metrics.get('moe_aux', 0):.6f} lr {lr:.3e} "
+                f"moe_aux {last_metrics.get('moe_aux', 0):.6f} "
+                f"reuse_p {last_metrics.get('reuse_p', 0.0):.2f} lr {lr:.3e} "
                 f"elapsed {elapsed/60:.1f} min"
             )
 

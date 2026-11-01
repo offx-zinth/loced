@@ -39,11 +39,13 @@ import jax
 import jax.numpy as jnp
 
 from .attention import (assemble_store_view, assemble_train_view, attend,
-                        full_exact, gather_by_idx, indexer_logits,
-                        init_layer_attn, init_shared_attn, kl_distill,
-                        oracle_scores, reindex_valid, select)
+                        full_exact, gather_by_idx, gather_view,
+                        indexer_scores_view, init_layer_attn,
+                        init_shared_attn, iter_query_chunks, kl_distill,
+                        oracle_scores, reindex_valid, select, slice_view,
+                        view_n_candidates)
 from .block import cell_visit, init_layer, init_loop, rmsnorm
-from .cache import append_delta, build_pool, new_store, seed_ring
+from .cache import append_delta, build_pool, new_store, pool_kv, seed_ring
 from .config import LoCEDConfig
 
 
@@ -100,12 +102,11 @@ def _ce(logits, targets):
 
 
 def _L(cfg, view):
-    return min(view["rows_k"].shape[2], cfg.window + cfg.top_k)
+    return min(view_n_candidates(view), cfg.window + cfg.top_k)
 
 
 def _gather(view, idx):
-    return (gather_by_idx(view["rows_k"], idx),
-            gather_by_idx(view["rows_v"], idx))
+    return gather_view(view, idx, "k"), gather_view(view, idx, "v")
 
 
 def _gather_valid(valid, idx):
@@ -144,8 +145,8 @@ def _run_full(cfg, params, pc, x, v, positions):
 def _run_reuse(cfg, params, pc, x, v, Kg, Vg, vg):
     """REUSE layer: same rows / indices as the anchor scoring visit, own Q."""
     def attn_fn(h):
-        out, _ = attend(_q(cfg, pc, h), Kg, Vg, vg)
-        return out, dict()
+        out, probs = attend(_q(cfg, pc, h), Kg, Vg, vg)
+        return out, dict(probs=probs)
     return cell_visit(cfg, params, pc, x, v, attn_fn)
 
 
@@ -156,12 +157,13 @@ def _run_reindex(cfg, params, pc, x, v, view):
     def attn_fn(h):
         hs = jax.lax.stop_gradient(h)          # indexer distill isolation
         valid2 = reindex_valid(cfg, params, hs, view)
-        lg = indexer_logits(cfg, params, hs, view["rows_ik"])
+        lg = indexer_scores_view(cfg, params, hs, view)
         idx2 = select(lg, valid2, view["boost"], L)
         Kg, Vg = _gather(view, idx2)
         vg = _gather_valid(valid2, idx2)
-        out, _ = attend(_q(cfg, pc, h), Kg, Vg, vg)
-        return out, dict(lg=lg, valid2=valid2, idx2=idx2, Kg=Kg, Vg=Vg, vg=vg)
+        out, probs = attend(_q(cfg, pc, h), Kg, Vg, vg)
+        return out, dict(lg=lg, valid2=valid2, idx2=idx2, Kg=Kg, Vg=Vg, vg=vg,
+                         probs=probs)
 
     return cell_visit(cfg, params, pc, x, v, attn_fn)
 
@@ -185,37 +187,46 @@ def _encode_pass(cfg, params, x, positions):
     return x, info, maux
 
 
-def _decode_pass(cfg, params, x, Kg, Vg, vg, view, oracle=None):
+def _decode_pass(cfg, params, x, Kg, Vg, vg, view, oracle=None,
+                 anchor_idx=None, collect=False):
     """Pass B: the sparse decode modes, one visit per physical layer.
 
     Visit v = V + k runs on layer k with mode `sparse_layers[k]`. `oracle`
     (training) distills the indexer at every scoring visit.
-    Returns (x, moe_aux_sum, kl, n_kl_terms).
+    Returns (x, moe_aux_sum, kl, n_kl_terms, visit_infos). `visit_infos` is
+    empty unless `collect=True`; it is used by the diagnostics harness.
     """
     V = cfg.num_layers
     maux = jnp.asarray(0.0, jnp.float32)
     kls = []
+    infos = []
     for k, mode in enumerate(cfg.sparse_layers):
         v = V + k
         pc = params["cells"][k]
         if mode == "reuse":
-            x, _, _, m = _run_reuse(cfg, params, pc, x, v, Kg, Vg, vg)
+            x, _, info, m = _run_reuse(cfg, params, pc, x, v, Kg, Vg, vg)
+            if collect:
+                infos.append(dict(visit=v, mode=mode, idx=anchor_idx,
+                                  probs=info["probs"]))
         elif mode == "reindex":
             x, _, info, m = _run_reindex(cfg, params, pc, x, v, view)
             if oracle is not None:
                 kls.append(kl_distill(oracle, info["lg"], info["valid2"]))
+            if collect:
+                infos.append(dict(visit=v, mode=mode, idx=info["idx2"],
+                                  probs=info["probs"]))
             Kg, Vg, vg = info["Kg"], info["Vg"], info["vg"]
         else:
             raise ValueError(f"decode layer {k} is '{mode}'")
         maux = maux + m
     kl = jnp.mean(jnp.stack(kls)) if kls else jnp.asarray(0.0, jnp.float32)
-    return x, maux, kl, len(kls)
+    return x, maux, kl, len(kls), infos
 
 
 def _anchor_select(cfg, params, x, view):
     """Inference anchor: indexer scores at the exit hidden pick the rows the
     REUSE layers inherit (top-k + forced window)."""
-    lg = indexer_logits(cfg, params, x, view["rows_ik"])
+    lg = indexer_scores_view(cfg, params, x, view)
     idx = select(lg, view["valid"], view["boost"], _L(cfg, view))
     Kg, Vg = _gather(view, idx)
     vg = _gather_valid(view["valid"], idx)
@@ -226,7 +237,18 @@ def _anchor_select(cfg, params, x, view):
 # training forward (teacher forcing)
 # ---------------------------------------------------------------------------
 
-def forward_train(cfg: LoCEDConfig, params: dict, tokens):
+def _forward_train_impl(cfg: LoCEDConfig, params: dict, tokens,
+                        diagnostics: bool = False,
+                        query_chunk_size: int | None = None,
+                        prefill_len: int | None = None,
+                        reuse_p: float = 0.0):
+    """Teacher-forced forward with optional raw intermediates for diagnostics.
+
+    The default `forward_train` wrapper returns exactly the previous contract;
+    `forward_train_diagnostics` exposes the anchor scoring hidden, candidate
+    view, oracle/indexer selections, per-visit attention probabilities and the
+    pooled store rows. The extra fields are never part of the loss.
+    """
     B, T = tokens.shape
     assert T % cfg.pool_m == 0, "train length must be a multiple of pool_m"
     positions = jnp.broadcast_to(jnp.arange(T, dtype=jnp.int32)[None, :], (B, T))
@@ -236,31 +258,97 @@ def forward_train(cfg: LoCEDConfig, params: dict, tokens):
     H_out, info_a, maux_a = _encode_pass(cfg, params, x, positions)
     probs_mean = info_a["probs"]
 
-    # KV bridging: pool_m:1 pool + per-position window rows
+    # KV bridging: prompt pool + simulated generated delta + trailing window.
     pk, pv, pik = _bridge(cfg, params, H_out)
     m = cfg.pool_m
-    P = T // m
-    pool_k = pk[:, : P * m].reshape(B, P, m, -1).mean(axis=2)
-    pool_v = pv[:, : P * m].reshape(B, P, m, -1).mean(axis=2)
-    pool_ik = jax.lax.stop_gradient(pool_k) @ params["W_ik"]
-    pool_last = positions[:, m - 1: P * m: m]
-    view = assemble_train_view(cfg, pool_k, pool_v, pool_ik, pool_last,
-                               pk, pv, pik, positions)
+    if prefill_len is None and cfg.train_delta:
+        prefill_len = int(round(T * cfg.train_prefill_frac))
+    if prefill_len is not None:
+        prefill_len = (int(prefill_len) // m) * m
+    use_delta = (cfg.train_delta and prefill_len is not None
+                 and m <= prefill_len < T)
+    if use_delta:
+        Tp = int(prefill_len)
+        P = Tp // m
+        pool_k, pool_v = pool_kv(cfg, pk[:, :Tp], pv[:, :Tp])
+        pool_last = positions[:, m - 1: Tp: m]
+        delta_start = max(0, Tp - cfg.window)
+        D = min(cfg.max_decode_len, T - delta_start)
+        if D > 0:
+            delta_pos = jnp.arange(delta_start, delta_start + D,
+                                   dtype=jnp.int32)
+            delta_k = pk[:, delta_pos]
+            delta_v = pv[:, delta_pos]
+            delta_ik = pik[:, delta_pos]
+        else:
+            delta_pos = delta_k = delta_v = delta_ik = None
+        pool_ik = jax.lax.stop_gradient(pool_k) @ params["W_ik"]
+        view = assemble_train_view(
+            cfg, pool_k, pool_v, pool_ik, pool_last, pk, pv, pik, positions,
+            delta_k=delta_k, delta_v=delta_v, delta_ik=delta_ik,
+            delta_pos=delta_pos, delta_query_start=Tp,
+            lazy=cfg.lazy_view)
+    else:
+        P = T // m
+        pool_k, pool_v = pool_kv(cfg, pk, pv)
+        pool_ik = jax.lax.stop_gradient(pool_k) @ params["W_ik"]
+        pool_last = positions[:, m - 1: P * m: m]
+        view = assemble_train_view(cfg, pool_k, pool_v, pool_ik, pool_last,
+                                   pk, pv, pik, positions, lazy=cfg.lazy_view)
     oracle = oracle_scores(cfg, view, probs_mean)
 
-    # anchor selection: the exact attention picks the rows REUSE inherits
+    # anchor selection: the exact attention picks the oracle rows; on-policy
+    # REUSE mixes in the indexer-selected rows (1.3) so training matches the
+    # inference selector. `reuse_p=0` keeps the original oracle path.
     idx_a = select(oracle, view["valid"], view["boost"], _L(cfg, view))
-    Kg, Vg = _gather(view, idx_a)
-    vg = _gather_valid(view["valid"], idx_a)
-
-    # indexer distill at the anchor scoring hidden (stop-grad isolated)
-    kl_a = kl_distill(oracle, indexer_logits(
-        cfg, params, jax.lax.stop_gradient(H_out), view["rows_ik"]),
-        view["valid"])
+    lg_a = indexer_scores_view(cfg, params, jax.lax.stop_gradient(H_out),
+                               view)
+    kl_a = kl_distill(oracle, lg_a, view["valid"])
+    idx_i = (select(lg_a, view["valid"], view["boost"], _L(cfg, view))
+             if (diagnostics or cfg.reuse_onpolicy) else None)
+    if cfg.reuse_onpolicy and idx_i is not None:
+        # Deterministic per-query mix: hash the position to [0, 1000) and
+        # compare against reuse_p. p=0 -> oracle, p=1 -> indexer everywhere.
+        phase = ((positions * 37 + 17) % 1000).astype(jnp.float32)
+        use_idx = phase[..., None] < (jnp.asarray(reuse_p, jnp.float32) * 1000.0)
+        idx_train = jnp.where(use_idx, idx_i, idx_a)
+    else:
+        idx_train = idx_a
+    Kg, Vg = _gather(view, idx_train)
+    vg = _gather_valid(view["valid"], idx_train)
 
     # pass B: reuse, reuse, reindex, reindex (mirrors inference)
-    x2, maux_b, kl_b, _ = _decode_pass(cfg, params, H_out, Kg, Vg, vg, view,
-                                        oracle=oracle)
+    if query_chunk_size is None or query_chunk_size >= T:
+        x2, maux_b, kl_b, _, infos = _decode_pass(
+            cfg, params, H_out, Kg, Vg, vg, view, oracle=oracle,
+            anchor_idx=idx_train, collect=diagnostics)
+    else:
+        if diagnostics:
+            raise ValueError("diagnostics=True currently requires a full-query pass")
+        # Pass B is query-local: every query owns its candidate rows, so the
+        # four visits can run independently per query chunk. The candidate
+        # view is still built once here; the lazy-scoring path (M3.1) removes
+        # that allocation.
+        x2_parts = []
+        infos = []
+        maux_b = jnp.asarray(0.0, jnp.float32)
+        kl_num = jnp.asarray(0.0, jnp.float32)
+        kl_den = 0
+        for start, stop in iter_query_chunks(T, query_chunk_size):
+            view_c = slice_view(view, start, stop)
+            idx_c = idx_train[:, start:stop]
+            Kg_c, Vg_c = _gather(view_c, idx_c)
+            vg_c = _gather_valid(view_c["valid"], idx_c)
+            xb, mb, klc, _, _ = _decode_pass(
+                cfg, params, H_out[:, start:stop], Kg_c, Vg_c, vg_c, view_c,
+                oracle=oracle[:, start:stop])
+            x2_parts.append(xb)
+            weight = stop - start
+            maux_b = maux_b + mb * (weight / T)
+            kl_num = kl_num + klc * weight
+            kl_den += weight
+        x2 = jnp.concatenate(x2_parts, axis=1)
+        kl_b = kl_num / max(kl_den, 1)
     kl = 0.5 * (kl_a + kl_b)
 
     logits = _head(cfg, params, x2)
@@ -270,8 +358,39 @@ def forward_train(cfg: LoCEDConfig, params: dict, tokens):
     moe_aux = (maux_a + maux_b) / cfg.num_visits
     loss = (ce + cfg.aux_deep_weight * ce_aux
             + cfg.indexer_kl_coef * kl + cfg.moe_aux_weight * moe_aux)
-    return dict(loss=loss, ce=ce, ce_aux=ce_aux, kl=kl, moe_aux=moe_aux,
-                logits=logits)
+    out = dict(loss=loss, ce=ce, ce_aux=ce_aux, kl=kl, moe_aux=moe_aux,
+               logits=logits)
+    if diagnostics:
+        out.update(
+            H_out=H_out, probs_mean=probs_mean, view=view, oracle=oracle,
+            idx_oracle=idx_a, idx_indexer=idx_i, anchor_logits=lg_a,
+            pool_k=pool_k, per_token_k=pk, pool_last=pool_last,
+            visit_infos=infos)
+    return out
+
+
+def forward_train(cfg: LoCEDConfig, params: dict, tokens,
+                  query_chunk_size: int | None = None,
+                  prefill_len: int | None = None,
+                  reuse_p: float = 0.0):
+    """Train forward. Returns the same loss/logit contract as before."""
+    out = _forward_train_impl(cfg, params, tokens, diagnostics=False,
+                              query_chunk_size=query_chunk_size,
+                              prefill_len=prefill_len, reuse_p=reuse_p)
+    return {k: out[k] for k in ("loss", "ce", "ce_aux", "kl", "moe_aux",
+                                "logits")}
+
+
+def forward_train_diagnostics(cfg: LoCEDConfig, params: dict, tokens,
+                              prefill_len: int | None = None,
+                              reuse_p: float = 0.0):
+    """Train forward plus raw selection/view/attention intermediates.
+
+    Not intended for the jitted train step: the returned `visit_infos` is a
+    Python list and the per-visit probabilities are kept for analysis.
+    """
+    return _forward_train_impl(cfg, params, tokens, diagnostics=True,
+                               prefill_len=prefill_len, reuse_p=reuse_p)
 
 
 # ---------------------------------------------------------------------------
@@ -294,9 +413,10 @@ def prefill(cfg: LoCEDConfig, params: dict, tokens):
     store = seed_ring(store, _tail(positions, W, -1), _tail(pk, W, 0.0),
                       _tail(pv, W, 0.0), _tail(pik, W, 0.0))
 
-    view = assemble_store_view(cfg, store, positions[:, -1])
+    view = assemble_store_view(cfg, store, positions[:, -1],
+                               lazy=cfg.lazy_view)
     Kg, Vg, vg = _anchor_select(cfg, params, H_out[:, -1:], view)
-    x2, _, _, _ = _decode_pass(cfg, params, H_out[:, -1:], Kg, Vg, vg, view)
+    x2, _, _, _, _ = _decode_pass(cfg, params, H_out[:, -1:], Kg, Vg, vg, view)
     return store, _head(cfg, params, x2)
 
 
@@ -323,9 +443,9 @@ def prefill_extend(cfg: LoCEDConfig, params: dict, store: dict, tokens,
     ri = jnp.concatenate([store["ring_ik"], pik[:, T - n:]], axis=1)[:, -W:]
     store = seed_ring(store, rp, rk, rv, ri)
 
-    view = assemble_store_view(cfg, store, positions)
+    view = assemble_store_view(cfg, store, positions, lazy=cfg.lazy_view)
     Kg, Vg, vg = _anchor_select(cfg, params, H_out, view)
-    x2, _, _, _ = _decode_pass(cfg, params, H_out, Kg, Vg, vg, view)
+    x2, _, _, _, _ = _decode_pass(cfg, params, H_out, Kg, Vg, vg, view)
     return store, _head(cfg, params, x2)
 
 
@@ -342,7 +462,7 @@ def decode_step(cfg: LoCEDConfig, params: dict, store: dict, token, pos: int):
     store = append_delta(store, pk, pv, pik, posv)
     view = assemble_store_view(cfg, store, posv)
     Kg, Vg, vg = _anchor_select(cfg, params, x, view)
-    x, _, _, _ = _decode_pass(cfg, params, x, Kg, Vg, vg, view)
+    x, _, _, _, _ = _decode_pass(cfg, params, x, Kg, Vg, vg, view)
     return store, _head(cfg, params, x)
 
 

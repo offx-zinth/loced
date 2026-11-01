@@ -81,11 +81,12 @@ def make_train_step(cfg: LoCEDConfig, params: dict, lr: float | None = None,
     opt_state = optimizer.init(params)
 
     @jax.jit
-    def step(params, opt_state, tokens):
+    def step(params, opt_state, tokens, reuse_p=0.0):
         def loss_fn(p):
-            out = forward_train(cfg, p, tokens)
+            out = forward_train(cfg, p, tokens, reuse_p=reuse_p)
             metrics = {k: out[k] for k in ("loss", "ce", "ce_aux", "kl",
                                            "moe_aux")}
+            metrics["reuse_p"] = jnp.asarray(reuse_p, jnp.float32)
             return out["loss"], metrics
 
         (loss, metrics), grads = jax.value_and_grad(
@@ -105,15 +106,21 @@ def train_smoke(steps: int = 200, batch: int = 4, seed: int = 0,
     params = init_model(cfg, jax.random.PRNGKey(seed))
     step, opt_state = make_train_step(cfg, params, lr=lr, optim=optim)
     rng = np.random.default_rng(seed)
+    warmup = int(steps * cfg.reuse_warmup_frac) if cfg.reuse_onpolicy else steps
+    ramp = max(1, int(steps * cfg.reuse_ramp_frac))
     history = []
     for i in range(steps):
         tokens = synthetic_batch(rng, batch, cfg.max_seq_len, cfg.vocab_size)
-        params, opt_state, metrics = step(params, opt_state, tokens)
+        reuse_p = 0.0 if not cfg.reuse_onpolicy else \
+            min(max((i - warmup) / ramp, 0.0), 1.0)
+        params, opt_state, metrics = step(params, opt_state, tokens,
+                                          reuse_p=reuse_p)
         history.append(metrics)
         if verbose and (i % 25 == 0 or i == steps - 1):
             print(f"step {i:4d}  loss {float(metrics['loss']):.4f}  "
                   f"ce {float(metrics['ce']):.4f}  "
-                  f"kl {float(metrics['kl']):.5f}")
+                  f"kl {float(metrics['kl']):.5f}  "
+                  f"reuse_p {float(metrics['reuse_p']):.2f}")
     return cfg, params, history
 
 
