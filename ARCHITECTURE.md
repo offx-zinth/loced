@@ -61,6 +61,27 @@ Tying is across roles, not depth: visit `v` runs on layer `v % 4`, so the
 layer weights are shared by encode, pass A and pass B. There is no
 `slots_per_pass`/loop multiplier — depth edits the stacks.
 
+### Residual-stream options (opt-in)
+
+The default is the single residual stream described above. Two architecture
+extensions are available without changing that checkpoint path:
+
+- **MagicNorm** (`magic_norm=True`): every visit is capped with a module-level
+  RMSNorm before its output enters the next visit. This bounds the recurrent
+  residual variance every step (PostNorm-like forward stability) while the
+  internal PreNorm identity paths still carry gradients.
+- **mHC** (`mhc_streams=n > 1`): the residual state is `[B,T,n,d]`. Each visit
+  mixes streams with `H_res`, projects a single feature stream through
+  `H_pre`, runs the normal attention + MoE sublayer, and injects the update
+  back through `H_post`:
+  `x' = H_res x + H_post ⊙ F(H_pre x)`.
+  `H_res` is projected onto the Birkhoff polytope with Sinkhorn, so it is
+  non-negative and doubly stochastic and cannot amplify the residual stream.
+  `H_pre` / `H_post` are softmax-normalized. `mhc_dynamic=True` predicts
+  per-token coefficient offsets from the mean stream; the default path uses
+  static per-visit coefficients. The bridge, indexer, final norm, and KV store
+  consume the mean stream, so the store layout is unchanged.
+
 ## 2. Attention: combining HySparse2 and CSA2
 
 One MQA KV head (width = `head_dim`), no positional encodings anywhere
@@ -173,6 +194,7 @@ indexer gradients (asserted in `test_indexer_gradients`).
 | kv_dim (MQA) | 16 | = head_dim |
 | pool_m | 2 | 2 (prompt), 1 (delta) |
 | pool_norm_preserve / lazy_view | True / True | True / True |
+| magic_norm / mhc_streams | False / 1 | opt-in (checkpoint compatibility) |
 | train_delta / train_prefill_frac | True / 0.5 | True / 0.5 |
 | reuse_onpolicy / warmup / ramp | True / 0.2 / 0.3 | True / 0.2 / 0.3 |
 | window | 16 | 128 |
@@ -222,7 +244,8 @@ Run smoke train: `python3.11 -m loced.train`
 - **Production kernels**: candidate rows are materialized per query. The
   scale-up path is fused score→top-k→gather Pallas kernels over query chunks
   (like MaxText's attention kernels) plus MXFP4 for main KV and FP4 indexer
-  keys. FP4/mHC/Engram from V4.1 are left as deployment-time extensions.
+  keys. FP4/Engram from V4.1 are left as deployment-time extensions; mHC is
+  available through the opt-in residual-stream path above.
 - **MaxText lift**: the parameter pytree and visit functions are pure
   functions of `(cfg, params, …)`, so the MaxText port is a thin NNX shell
   rather than an algorithm rewrite. `loced/maxtext/` now contains the NNX

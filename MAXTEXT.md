@@ -129,6 +129,15 @@ The fidelity switches default to the implemented behavior:
 |---|---|---|
 | `loced_pool_norm_preserve` | `True` | rescale pooled K/V to constituent mean norm (D1) |
 | `loced_lazy_view` | `True` | segment scoring/gather without a `[B,T,C,w]` view (D6) |
+| `loced_magic_norm` | `False` | module-level RMSNorm at every visit exit |
+| `loced_mhc_streams` | `1` | mHC residual streams (`>1` enables mHC) |
+| `loced_mhc_sinkhorn_iters` | `10` | Birkhoff projection iterations for `H_res` |
+| `loced_mhc_dynamic` | `False` | predict per-token mHC coefficient offsets |
+
+MagicNorm and mHC are opt-in so the frozen 100M/T=128 parameter layout is
+unchanged. The NNX module mirrors their parameter graph when enabled, but this
+workstation lacks Flax/MaxText, so the MaxText mHC/MagicNorm parity path is not
+yet validated on-device.
 | `loced_train_delta` | `True` | train with the simulated `pool \| delta \| ring` view (D3) |
 | `loced_train_prefill_frac` | `0.5` | prompt fraction of each training sequence |
 | `loced_reuse_onpolicy` | `True` | let REUSE consume the learned indexer selection |
@@ -218,7 +227,7 @@ Current results on the tiny config (549,456 parameters):
 | Orbax save/restore | model + optimizer state + `optimizer.step` exact |
 | trainer resume | run 2 steps, restore, continue to step 3 |
 | real MaxText utilities | enforced with `LOCED_REQUIRE_REAL_MAXTEXT_UTILS=1` |
-| reference smoke suite | 28 passed |
+| reference smoke suite | 31 passed |
 | reference diagnostics | segment mass, recall@L, train/decode KL, chunk parity, on-policy REUSE |
 
 The MaxText integration suite currently has 15 tests. The YAML test initializes

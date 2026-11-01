@@ -36,6 +36,26 @@ Immediate work: **M0 + M0.5**, then 1.1/1.3 (Track F) and M3.1 (Track T) in
 parallel. M0.5 must land before either track edits the view/scoring layout, so
 the parallel tracks do not invent competing APIs.
 
+## Architecture scope update (2026-11-01)
+
+The complexity/compression track (Phase 2: oracle subsampling, causal sparse
+encode, KDA) is **deferred**. Current work is limited to bug patches and
+architecture improvements, specifically:
+
+- **MagicNorm** — module-level RMSNorm at every visit exit. Implemented behind
+  `magic_norm` (opt-in).
+- **mHC** — multi-stream residual state with a Sinkhorn-projected Birkhoff
+  mixing matrix `H_res`, plus `H_pre`/`H_post` projections. Implemented behind
+  `mhc_streams > 1` (opt-in), with optional dynamic coefficient prediction.
+- **Bug patches** — MaxText `__call__` now honors the `reuse_p` schedule;
+  architecture fields are mapped through MaxText config.
+
+Both architecture changes are opt-in so the frozen 100M/T=128 checkpoint path
+and existing parameter layout remain unchanged. The reference suite is now
+**31 passed**, including MagicNorm, static mHC, dynamic-coefficient mHC, and
+Sinkhorn doubly-stochastic checks. MaxText/Flax remains unvalidated in this
+environment.
+
 ## Progress on `improvement-plan`
 
 Implemented and tested in the pure-JAX suite:
@@ -164,7 +184,10 @@ A/B belongs in Phase 6 (TinyStories, as in the MoRE runs).
 
 ---
 
-## Phase 2 — Complexity: O(T) training and prefill
+## Phase 2 — Complexity: O(T) training and prefill  ⏸ DEFERRED
+
+Per the 2026-11-01 scope update, this track is deferred. It remains below as a
+reference, but no Phase 2 optimization work is active.
 
 Today `full_exact` is O(T²) in **both** training and prefill (`model.py:281`);
 compression/sparsity only pays at decode. Three escalating steps:
