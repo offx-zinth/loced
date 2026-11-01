@@ -43,6 +43,13 @@ except ImportError:  # pragma: no cover - pydantic ships with MaxText
 # Defaults accepted by both the pydantic (MaxText) and dataclass (CPU) forms.
 _LOCED_DEFAULTS: dict[str, Any] = {
     "loced_pool_m": 2,
+    "loced_pool_norm_preserve": True,
+    "loced_lazy_view": True,
+    "loced_train_delta": True,
+    "loced_train_prefill_frac": 0.5,
+    "loced_reuse_onpolicy": True,
+    "loced_reuse_warmup_frac": 0.2,
+    "loced_reuse_ramp_frac": 0.3,
     "loced_window": 32,
     "loced_top_k": 32,
     "loced_indexer_heads": 4,
@@ -88,6 +95,27 @@ if MaxTextConfig is not None and Field is not None:
         model_name: str = Field("default", description="Model config name; resolved to configs/models/<name>.yml.")
 
         loced_pool_m: int = Field(2, ge=1, description="KV Bridging pool_m:1 compression ratio.")
+        loced_pool_norm_preserve: bool = Field(
+            True, description="Rescale pooled K/V to the constituent mean norm (D1)."
+        )
+        loced_lazy_view: bool = Field(
+            True, description="Score/gather candidate segments lazily (no [B,T,C,w] view)."
+        )
+        loced_train_delta: bool = Field(
+            True, description="Simulate the prompt->generated delta store during training (D3)."
+        )
+        loced_train_prefill_frac: float = Field(
+            0.5, gt=0.0, lt=1.0, description="Fraction of a training sequence treated as prompt."
+        )
+        loced_reuse_onpolicy: bool = Field(
+            True, description="Let REUSE consume the learned indexer's selection during training."
+        )
+        loced_reuse_warmup_frac: float = Field(
+            0.2, ge=0.0, le=1.0, description="Oracle-only fraction before on-policy REUSE."
+        )
+        loced_reuse_ramp_frac: float = Field(
+            0.3, gt=0.0, le=1.0, description="Ramp length from oracle to on-policy selection."
+        )
         loced_window: int = Field(32, ge=0, description="Forced local attention window.")
         loced_top_k: int = Field(32, ge=0, description="Token-level sparse attention budget.")
         loced_indexer_heads: int = Field(4, ge=1, description="Number of indexer query heads.")
@@ -129,6 +157,13 @@ else:  # pragma: no cover - CPU-only fallback
         """CPU fallback carrying the same ``loced_*`` fields as the MaxText form."""
 
         loced_pool_m: int = 2
+        loced_pool_norm_preserve: bool = True
+        loced_lazy_view: bool = True
+        loced_train_delta: bool = True
+        loced_train_prefill_frac: float = 0.5
+        loced_reuse_onpolicy: bool = True
+        loced_reuse_warmup_frac: float = 0.2
+        loced_reuse_ramp_frac: float = 0.3
         loced_window: int = 32
         loced_top_k: int = 32
         loced_indexer_heads: int = 4
@@ -225,6 +260,13 @@ def loced_config_from_maxtext(config: Any):
         head_dim=int(config.head_dim),
         kv_dim=int(config.head_dim),
         pool_m=int(_loced_get(config, "loced_pool_m")),
+        pool_norm_preserve=bool(_loced_get(config, "loced_pool_norm_preserve")),
+        lazy_view=bool(_loced_get(config, "loced_lazy_view")),
+        train_delta=bool(_loced_get(config, "loced_train_delta")),
+        train_prefill_frac=float(_loced_get(config, "loced_train_prefill_frac")),
+        reuse_onpolicy=bool(_loced_get(config, "loced_reuse_onpolicy")),
+        reuse_warmup_frac=float(_loced_get(config, "loced_reuse_warmup_frac")),
+        reuse_ramp_frac=float(_loced_get(config, "loced_reuse_ramp_frac")),
         window=int(_loced_get(config, "loced_window")),
         top_k=int(_loced_get(config, "loced_top_k")),
         indexer_heads=int(_loced_get(config, "loced_indexer_heads")),
@@ -314,6 +356,13 @@ def loced_config_from_mapping(mapping: Mapping[str, Any]):
         head_dim=int(get("head_dim", base.head_dim)),
         kv_dim=int(get("head_dim", base.kv_dim)),
         pool_m=int(get("loced_pool_m", base.pool_m)),
+        pool_norm_preserve=bool(get("loced_pool_norm_preserve", base.pool_norm_preserve)),
+        lazy_view=bool(get("loced_lazy_view", base.lazy_view)),
+        train_delta=bool(get("loced_train_delta", base.train_delta)),
+        train_prefill_frac=float(get("loced_train_prefill_frac", base.train_prefill_frac)),
+        reuse_onpolicy=bool(get("loced_reuse_onpolicy", base.reuse_onpolicy)),
+        reuse_warmup_frac=float(get("loced_reuse_warmup_frac", base.reuse_warmup_frac)),
+        reuse_ramp_frac=float(get("loced_reuse_ramp_frac", base.reuse_ramp_frac)),
         window=int(get("loced_window", base.window)),
         top_k=int(get("loced_top_k", base.top_k)),
         indexer_heads=int(get("loced_indexer_heads", base.indexer_heads)),

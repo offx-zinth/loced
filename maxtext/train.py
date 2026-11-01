@@ -116,15 +116,23 @@ def create_optimizer(config, model: LoCEDModel, mesh):
 # ---------------------------------------------------------------------------
 
 
-def loss_fn(model: LoCEDModel, tokens: jax.Array):
+def loss_fn(model: LoCEDModel, tokens: jax.Array, reuse_p: float = 0.0):
     """Module-level loss so ``nnx.value_and_grad`` sees an unbound function."""
-    return model.train_loss(tokens)
+    return model.train_loss(tokens, reuse_p=reuse_p)
 
 
 @nnx.jit
-def train_step(model: LoCEDModel, optimizer: nnx.Optimizer, tokens: jax.Array):
-    """One jitted value-and-grad step using MaxText's Muon update."""
-    (loss, metrics), grads = nnx.value_and_grad(loss_fn, has_aux=True)(model, tokens)
+def train_step(model: LoCEDModel, optimizer: nnx.Optimizer, tokens: jax.Array,
+               reuse_p: float = 0.0):
+    """One jitted value-and-grad step using MaxText's Muon update.
+
+    ``reuse_p`` is the on-policy REUSE schedule value: 0 keeps oracle rows,
+    1 uses the learned indexer, and intermediate values mix per query.
+    """
+    def step_loss(m):
+        return m.train_loss(tokens, reuse_p=reuse_p)
+
+    (loss, metrics), grads = nnx.value_and_grad(step_loss, has_aux=True)(model)
     optimizer.update(model, grads)
     return loss, metrics
 
@@ -268,16 +276,22 @@ def train(
             seed=int(getattr(config, "init_weights_seed", 0)),
         )
 
+    warmup = int(steps * loced_cfg.reuse_warmup_frac) \
+        if loced_cfg.reuse_onpolicy else steps
+    ramp = max(1, int(steps * loced_cfg.reuse_ramp_frac))
     last_metrics: dict = {}
     for step, tokens in zip(range(start_step, steps), batches):
-        loss, metrics = train_step(model, optimizer, tokens)
+        reuse_p = 0.0 if not loced_cfg.reuse_onpolicy else \
+            min(max((step - warmup) / ramp, 0.0), 1.0)
+        loss, metrics = train_step(model, optimizer, tokens, reuse_p=reuse_p)
         last_metrics = {k: float(v) for k, v in metrics.items()}
         if log_every > 0 and (step % log_every == 0 or step == steps - 1):
             lr = float(schedule(step))
             max_logging.log(
                 f"step {step:6d} loss {float(loss):.6f} "
                 f"ce {last_metrics['ce']:.6f} kl {last_metrics['kl']:.6f} "
-                f"moe_aux {last_metrics['moe_aux']:.6f} lr {lr:.3e}"
+                f"moe_aux {last_metrics['moe_aux']:.6f} "
+                f"reuse_p {last_metrics.get('reuse_p', 0.0):.2f} lr {lr:.3e}"
             )
         if ckpt_dir and (step + 1) % max(1, int(config.checkpoint_period)) == 0:
             save_checkpoint(ckpt_dir, model, optimizer)

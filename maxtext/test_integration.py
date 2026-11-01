@@ -14,6 +14,7 @@ import importlib
 import os
 import sys
 import types
+from pathlib import Path
 from types import SimpleNamespace
 
 import jax
@@ -569,6 +570,20 @@ def test_trainer_resumes_from_checkpoint(tmp_path):
     resumed = pyconfig.initialize([*common, "steps=3"], config_class=config_class)
     _, optimizer2, _ = maxtext_train.train(resumed, log_every=0)
     assert int(optimizer2.step.get_value()) == 3
+
+
+def test_local_dataset_files_exclude_test_split(tmp_path):
+    pytest.importorskip("maxtext")
+    from .hf_train import _local_dataset_files
+
+    root = tmp_path / "tiny-textbooks"
+    root.mkdir()
+    (root / "train-00000-of-00001.parquet").write_bytes(b"train")
+    (root / "test-00000-of-00001.parquet").write_bytes(b"test")
+    files = _local_dataset_files("nampdn-ai/tiny-textbooks", tmp_path)
+    assert [Path(name).name for name in files] == [
+        "train-00000-of-00001.parquet"
+    ]
 
 
 @pytest.mark.skipif(not _HAS_MAXTEXT, reason="MaxText is not importable")

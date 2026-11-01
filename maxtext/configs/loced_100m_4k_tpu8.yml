@@ -1,0 +1,59 @@
+# LoCED-100M 4k-context gate (TPU v5e-8).
+#
+# This is the **gate**, not the production run.  The 100M/T=128 full-pass
+# configuration is frozen until this passes.  The point is to measure whether
+# the lazy `pool | delta | ring` view plus the current exact pass-A stack fit
+# and converge at 4096 tokens on the primary target.
+#
+#   python -m loced.maxtext.train \
+#       loced/maxtext/configs/loced_100m_4k_tpu8.yml \
+#       steps=20 run_name=loced-100m-4k-gate
+#
+# T4 x2 remains the secondary fallback; use the same overrides with the T4
+# run config when v5e-8 is unavailable.
+base_config: base.yml
+model_name: loced-100m
+
+run_name: loced-100m-4k-gate
+log_config: false
+skip_jax_distributed_system: true
+
+# --- gate workload ---
+steps: 20
+learning_rate: 1.0e-4
+learning_rate_schedule_steps: 20
+warmup_steps_fraction: 0.05
+learning_rate_final_fraction: 0.2
+lr_schedule_type: cosine
+per_device_batch_size: 1          # 8 sequences/step on v5e-8
+max_target_length: 4096
+enable_dropout: false
+
+# 4k needs a larger exact ring; the compressed pool is 2048 rows at pool_m=2.
+loced_window: 128
+loced_top_k: 128
+loced_max_decode_len: 128
+loced_indexer_block: 8
+loced_hier_blocks: 8
+loced_train_delta: true
+loced_train_prefill_frac: 0.5
+loced_reuse_onpolicy: true
+loced_lazy_view: true
+
+# MaxText Muon only.
+opt_type: muon
+muon_type: maxtext_muon
+muon_include_routers: true
+muon_use_all_to_all: false
+muon_weight_decay: 0.0
+adam_weight_decay: 0.01
+
+# 8-chip data-parallel mesh; the model is replicated.
+ici_data_parallelism: 8
+ici_fsdp_parallelism: 1
+ici_tensor_parallelism: 1
+ici_expert_parallelism: 1
+
+enable_checkpointing: true
+checkpoint_period: 100
+checkpoint_dir: ""

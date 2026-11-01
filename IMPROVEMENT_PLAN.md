@@ -1,7 +1,77 @@
 # LoCED — Improvement Plan
 
-Status snapshot: 2026-10-21. Scope: `loced/` (pure-JAX reference implementation).
-Phase 0.5 (Muon) is **implemented and green**; everything else is planned.
+Status snapshot: 2026-11-01. Scope: `loced/` (pure-JAX reference implementation).
+Phase 0.5 (Muon) is **implemented and green**; the MaxText 100M/500M full-pass
+paths are implemented. The next target is **4k context**, with fidelity and
+long-context engineering running in parallel.
+
+## Execution plan (2026-10-31)
+
+Decisions locked:
+
+1. **Parallel workstreams on one branch** (`improvement-plan`):
+   - **Track F (fidelity):** Phase 0 -> Phase 1 -> Phase 3.
+   - **Track T (long context):** Phase 0 -> shared view API -> Phase 5 ->
+     Phase 2.
+2. **Target 4k context now.** The 100M/T=128 full-pass run stays frozen until
+   the 4k gate passes.
+3. **Primary 4k gate: TPU v5e-8.** T4 x2 is the secondary fallback.
+4. **The learned indexer is the only inference selector**, so 1.3
+   (on-policy REUSE) is mandatory.
+
+Milestone order:
+
+| ID | Deliverable | Gate |
+|---|---|---|
+| M0 | Diagnostics harness + AdamW/Muon baseline artifacts | Every later claim has before/after numbers |
+| M0.5 | Canonical `pool \| delta \| ring` view + query-chunk iterator | Chunked path matches current output |
+| M1 | Norm-preserving pool, delta train view, on-policy REUSE, pass-A spike | D1-D4 fixed/measured; no loss regression |
+| M2 | Segment gates, bridge/QK/pass-boundary norms, warmup ramps | No regression; norm/gate variance bounded |
+| M3 | Lazy segment scoring, selected-row gather, 4k TPU v5e-8 benchmark | 4k fits TPU v5e-8; chunked == unchunked |
+| M4 | Causal sparse encode + sampled exact oracle | Same CE at 2k-4k for <= 1/5 wall clock |
+| M5 | Compression loss/weights, relevance eviction, two-level indexer, sink | Ablation wins on M0 metrics |
+| M6 | Continuous fixed eval matrix | Reproducible report per change |
+
+Immediate work: **M0 + M0.5**, then 1.1/1.3 (Track F) and M3.1 (Track T) in
+parallel. M0.5 must land before either track edits the view/scoring layout, so
+the parallel tracks do not invent competing APIs.
+
+## Progress on `improvement-plan`
+
+Implemented and tested in the pure-JAX suite:
+
+- [x] **M0** `loced/diagnostics.py`: segment mass, recall@L/Jaccard, oracle vs
+  indexer segment shares, pool norm ratio, teacher-forced train/decode KL,
+  JSON reports, AdamW/Muon baseline CLI.
+- [x] **M0.5 (API half)** canonical `pool | delta | ring` view metadata,
+  `iter_query_chunks`, `slice_view`, selected-row gather helper, and
+  query-chunked pass B. Chunked and unchunked logits/loss match.
+- [x] **1.1** norm-preserving pooling in the shared `cache.pool_kv` helper.
+  Tiny-config `‖pool‖/mean‖constituent‖` moved from ~0.81 to ~1.00.
+- [x] **1.2** training-time delta simulation. Training validity/source
+  positions now match the real prefill+decode store at every generated query.
+- [x] **1.3** on-policy REUSE (`reuse_p` schedule, deterministic per-query
+  mix). Reference trainer and MaxText trainer both ramp oracle -> indexer.
+- [x] **MaxText plumbing** for `pool_norm_preserve`, `train_delta`,
+  `train_prefill_frac`, `reuse_onpolicy`, warmup/ramp config fields.
+- [x] **M3.1 (core)** lazy segment scoring + selected-row gather. Training
+  and multi-turn prefill keep pool/delta shared and only materialize the ring
+  plus `[B,T,L,w]` selected rows; `lazy_view=True` matches the materialized
+  view exactly, and query-chunked pass B matches to `~1e-7`.
+- [ ] **4k TPU v5e-8 gate**: run
+  `maxtext/configs/loced_100m_4k_tpu8.yml` (100M shape,
+  `max_target_length=4096`, window/top-k 128, batch 1/chip). The exact pass-A
+  attention is still O(T²), so this gate also measures whether Phase 2 is
+  needed before promising 4k.
+- [ ] Rerun MaxText parity suite in a MaxText environment (this workstation
+  lacks Flax/MaxText).
+
+D2 needs a corrected baseline: with a forced window of `W`, `L = W + top_k`,
+and a full window available, the expected pool share is `top_k / L = 0.5`,
+not `0.667`. The measured `0.559` is above that because early queries have
+shorter valid windows. The diagnostics harness now reports the raw counts, so
+D2 should be judged on indexer-vs-oracle agreement and recall, not against
+`0.667`.
 
 ---
 
@@ -19,19 +89,26 @@ All numbers from the tiny config (`hidden=64`, 4 layers, `pool_m=2`, `window=16`
 | D5 | **Pass A attention is a no-op at decode** | `full_exact` with `T=1` attends only to itself (`model.py:340`) | 4 of 8 visits per token pay attention cost for zero context; also means the encoder has no local context |
 | D6 | **Candidate views are materialized** `[B,T,C,w]` | `attention.py:238-248` | ~14 GB per tensor at B=1, T=4096, C=2176, w=128 → blocks any real context length |
 
-Open: the **per-segment attention-mass** measurement (`pr` is `[B,T,H,L]`, mask
-must broadcast as `[B,T,1,L]`) is not yet correct — Phase 0 item.
+Status: **D1 fixed** (norm-preserving pool), **D3 fixed** (training delta
+simulation), **D4 fixed** (on-policy REUSE schedule), **D6 mitigated** (lazy
+segment scoring/gather; no `[B,T,C,w]` view). **D2** is measured but the
+`0.667` target was not the right null; see Progress. **D5 remains open** and
+the O(T²) exact pass-A attention is the remaining 4k cost.
+
+The segment-mass measurement is now correct: `attend` returns `[B,T,H,L]`
+and the diagnostics mask broadcasts as `[B,T,1,L]`.
 
 ---
 
 ## Phase 0 — Instrumentation (blocks Phase 1 decisions)
 
-- [ ] Fix segment attention-mass measurement (pool / window / delta).
-- [ ] Metrics harness logged per step: segment mass, indexer **recall@L vs oracle**,
-      selection counts per segment, oracle↔indexer agreement.
-- [ ] **Train-vs-decode agreement**: teacher-forced decode through the real store
+- [x] Fix segment attention-mass measurement (pool / window / delta).
+- [x] Metrics harness: segment mass, indexer **recall@L vs oracle**, selection
+      counts per segment, oracle↔indexer agreement (`loced/diagnostics.py`).
+- [x] **Train-vs-decode agreement**: teacher-forced decode through the real store
       on the same sequence; report logit KL vs the training pass.
-- [ ] Baseline artifacts: loss curves for AdamW and Muon on the same seed/batches.
+- [x] Baseline artifacts: loss curves for AdamW and Muon on the same
+      seed/batches (`loced/validation/diagnostics_baseline_*.json`).
 
 Acceptance: every Phase 1 claim is backed by a before/after number from this harness.
 
@@ -80,9 +157,9 @@ A/B belongs in Phase 6 (TinyStories, as in the MoRE runs).
 
 | Item | Change | Files | Acceptance |
 |---|---|---|---|
-| 1.1 Norm-preserving pooling | Rescale pooled K/V to constituent mean norm, or QK-norm; optionally normalize keys before pooling | `cache.py:88-89` | `‖k_pool‖/‖k_t‖ ≈ 1`; pool share of top-k → ~0.667 (D1/D2) |
-| 1.2 Train-time delta simulation | Add a `delta` segment (m=1 entries from pass-A exit hiddens) to the training candidate view, with the ring-archive protocol | `attention.py:222`, `cache.py:118` | Training view contains pool+delta+ring exactly like `assemble_store_view` (D3) |
-| 1.3 On-policy REUSE | Mix/λ-schedule oracle vs indexer rows for the two REUSE visits; switch fully after warmup | `model.py:252`, `model.py:215` | Train/decode REUSE selection agreement > 95% by end of training (D4) |
+| 1.1 Norm-preserving pooling ✅ | Rescale pooled K/V to constituent mean norm, or QK-norm; optionally normalize keys before pooling | `cache.py:pool_kv` | `‖k_pool‖/mean‖k_t‖ ≈ 1.00` (was ~0.81). D2 needs the forced-window baseline, see Progress. |
+| 1.2 Train-time delta simulation ✅ | Add a `delta` segment (m=1 entries from pass-A exit hiddens) to the training candidate view, with the ring-archive protocol | `attention.py:assemble_train_view`, `oracle_scores` | Training view contains pool+delta+ring and matches store validity/source positions (D3 test). |
+| 1.3 On-policy REUSE ✅ | Mix/λ-schedule oracle vs indexer rows for the two REUSE visits; switch fully after warmup | `model.py`, `train.py`, `maxtext/train.py` | `reuse_p=1` REUSE indices equal indexer indices; schedule is wired in reference + MaxText loops (D4). |
 | 1.4 Pass-A local context | Give pass A SWA over the ring (HySparse2 self-decoder) or delete its attention for the ablation | `model.py:340` | Decode FLOPs −25% (delete) or perplexity non-regression (SWA) (D5) |
 
 ---

@@ -3,9 +3,11 @@
 This is the MaxText training entry point used by both the 8-chip TPU and the
 2x T4 GPU notebooks.  It:
 
-1. Streams (no local download) the six nampdn-ai textbook / code / webtext
-   datasets, interleaves them with a shuffled ratio schedule, keeps every
-   token in a rolling stream, and tokenizes on the fly with a 32k tokenizer.
+1. Streams the six nampdn-ai textbook / code / webtext datasets, interleaves
+   them with a shuffled ratio schedule, keeps every token in a rolling stream,
+   and tokenizes on the fly with a 32k tokenizer.  Set
+   ``LOCED_HF_LOCAL_DATA`` to a prefetched directory to read local parquet
+   files instead of hitting the Hugging Face CDN during training.
 2. Trains the ~500.2M LoCED model with MaxText Muon (opt_type="muon",
    muon_type="maxtext_muon").
 3. Checkpoints model + optimizer with Orbax every 10 minutes of wall clock
@@ -37,6 +39,7 @@ from __future__ import annotations
 import os
 import sys
 import time
+from pathlib import Path
 from typing import Iterable, Iterator
 
 import jax
@@ -124,29 +127,63 @@ def _extract_text(dataset_name: str, example: dict, features) -> str | None:
     return "\n\n".join(parts) if parts else None
 
 
+def _local_dataset_files(dataset_name: str, local_root: str | os.PathLike) -> list[str]:
+    """Return the local train parquet files for one prefetched dataset.
+
+    ``snapshot_download`` mirrors a dataset repository, so files live under a
+    subdirectory named after the dataset.  The tiny-textbooks repository also
+    contains a test parquet file; it must not leak into the training pass.
+    """
+    short_name = dataset_name.rsplit("/", 1)[-1]
+    root = Path(local_root) / short_name
+    files = sorted(
+        str(path)
+        for path in root.rglob("*.parquet")
+        if "test" not in path.name.lower()
+        and "validation" not in path.name.lower()
+    )
+    if not files:
+        raise FileNotFoundError(
+            f"No local parquet files for {dataset_name} under {root}. "
+            "Prefetch the datasets or unset LOCED_HF_LOCAL_DATA."
+        )
+    return files
+
+
 def _iter_dataset_text(
     dataset_name: str,
     split: str,
     token: str | None,
     seed: int,
     shuffle_buffer: int = 10_000,
+    local_root: str | os.PathLike | None = None,
 ) -> Iterator[str]:
-    """Yield text examples from one streaming HF dataset."""
+    """Yield text examples from one streaming HF dataset or local mirror."""
     from datasets import load_dataset  # imported lazily so CPU envs keep working
 
-    ds = load_dataset(
-        dataset_name,
-        split=split,
-        streaming=True,
-        token=token,
-        trust_remote_code=True,
-    )
+    if local_root is not None:
+        files = _local_dataset_files(dataset_name, local_root)
+        ds = load_dataset(
+            "parquet",
+            data_files=files,
+            split=split,
+            streaming=True,
+        )
+    else:
+        ds = load_dataset(
+            dataset_name,
+            split=split,
+            streaming=True,
+            token=token,
+            trust_remote_code=True,
+        )
     column = _text_column(ds.features)
     if column is None:
         raise ValueError(
             f"No text column found in {dataset_name}; features={dict(ds.features)}"
         )
-    ds = ds.shuffle(seed=seed, buffer_size=shuffle_buffer)
+    if shuffle_buffer > 0:
+        ds = ds.shuffle(seed=seed, buffer_size=shuffle_buffer)
     for example in ds:
         text = _extract_text(dataset_name, example, ds.features)
         if text is not None:
@@ -202,6 +239,7 @@ def hf_streaming_batches(
     split: str = "train",
     tokenizer_name: str | None = None,
     max_examples: int | None = None,
+    local_root: str | os.PathLike | None = None,
 ) -> Iterable[jax.Array]:
     """Yield int32 ``[batch, seq]`` token batches from streaming HF datasets.
 
@@ -209,7 +247,8 @@ def hf_streaming_batches(
     LoCED vocabulary.  Documents are concatenated through a rolling token buffer
     (with BOS/EOS separators), so trailing tokens are not dropped; only the
     final short window is padded.  A shuffle buffer mixes windows from all
-    datasets before batching.
+    datasets before batching.  When ``local_root`` is set, parquet files are
+    read from a prefetched local mirror (one subdirectory per dataset name).
     """
     rng = np.random.default_rng(seed)
     token = _hf_token()
@@ -242,7 +281,9 @@ def hf_streaming_batches(
             return [(seed_hash * 31 + i) % vocab_size for i in range(len(text))]
 
     iterators = [
-        _iter_dataset_text(name, split, token, seed + i)
+        _iter_dataset_text(
+            name, split, token, seed + i, local_root=local_root
+        )
         for i, name in enumerate(datasets)
     ]
     mixed = _mix_iterators(iterators, list(ratios), rng)
@@ -332,6 +373,9 @@ def train_timed(
     last_step = start_step
     did_step = False
     schedule_steps = max(1, int(getattr(config, "learning_rate_schedule_steps", steps)))
+    warmup = int(steps * loced_cfg.reuse_warmup_frac) \
+        if loced_cfg.reuse_onpolicy else steps
+    ramp = max(1, int(steps * loced_cfg.reuse_ramp_frac))
     # Data-parallel input: global batch is sharded across the "data" mesh axis,
     # so each device sees per_device_batch_size examples.
     data_sharding = NamedSharding(mesh, P("data", None))
@@ -344,7 +388,9 @@ def train_timed(
             break
 
         tokens = jax.device_put(tokens, data_sharding)
-        loss, metrics = train_step(model, optimizer, tokens)
+        reuse_p = 0.0 if not loced_cfg.reuse_onpolicy else \
+            min(max((step - warmup) / ramp, 0.0), 1.0)
+        loss, metrics = train_step(model, optimizer, tokens, reuse_p=reuse_p)
         last_metrics = {k: float(v) for k, v in metrics.items()}
         last_step = step
         did_step = True
@@ -355,7 +401,8 @@ def train_timed(
             max_logging.log(
                 f"step {step:6d} loss {float(loss):.6f} "
                 f"ce {last_metrics.get('ce', 0):.6f} kl {last_metrics.get('kl', 0):.6f} "
-                f"moe_aux {last_metrics.get('moe_aux', 0):.6f} lr {lr:.3e} "
+                f"moe_aux {last_metrics.get('moe_aux', 0):.6f} "
+                f"reuse_p {last_metrics.get('reuse_p', 0.0):.2f} lr {lr:.3e} "
                 f"elapsed {elapsed/60:.1f} min"
             )
 
@@ -385,6 +432,9 @@ def main(argv: list[str] | None = None) -> None:
     ratios_env = os.environ.get("HF_RATIOS") or getattr(config, "hf_ratios", "") or ""
     ratios = tuple(float(r) for r in ratios_env.split(",") if r.strip()) or None
     tokenizer_name = os.environ.get("HF_TOKENIZER") or getattr(config, "hf_tokenizer", None) or None
+    local_root = os.environ.get("LOCED_HF_LOCAL_DATA") or None
+    if local_root:
+        max_logging.log(f"reading prefetched parquet data from {local_root}")
     seed = int(getattr(config, "init_weights_seed", 0))
     data_parallelism = max(1, int(getattr(config, "ici_data_parallelism", 1)))
     global_batch = int(config.per_device_batch_size) * data_parallelism
@@ -397,6 +447,7 @@ def main(argv: list[str] | None = None) -> None:
         ratios=ratios,
         seed=seed,
         tokenizer_name=tokenizer_name,
+        local_root=local_root,
     )
 
     _, _, metrics = train_timed(
