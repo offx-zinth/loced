@@ -160,11 +160,15 @@ class LoCEDLayer(nnx.Module):
         d = cfg.hidden_size
         self.norm_a = _p(jnp.ones((d,), jnp.float32), ("norm",))
         self.norm_m = _p(jnp.ones((d,), jnp.float32), ("norm",))
+        self.norm_magic = (
+            _p(jnp.ones((d,), jnp.float32), ("norm",))
+            if cfg.magic_norm else None
+        )
         self.attn = LoCEDAttention(cfg, rngs)
         self.moe = LoCEDMoE(cfg, rngs)
 
     def reference_dict(self) -> dict:
-        return {
+        out = {
             "norm_a": self.norm_a.get_value(),
             "norm_m": self.norm_m.get_value(),
             "W_q": self.attn.W_q.get_value(),
@@ -173,6 +177,9 @@ class LoCEDLayer(nnx.Module):
             "W_o": self.attn.W_o.get_value(),
             **self.moe.reference_dict(),
         }
+        if self.norm_magic is not None:
+            out["norm_magic"] = self.norm_magic.get_value()
+        return out
 
 
 class LoCEDModel(nnx.Module):
@@ -217,6 +224,23 @@ class LoCEDModel(nnx.Module):
         self.gate_m = _p(jnp.zeros((nv,), jnp.float32), (None,))
         self.norm_f = _p(jnp.ones((d,), jnp.float32), ("norm",))
 
+        self.mhc_res = self.mhc_pre = self.mhc_post = self.mhc_dyn = None
+        if cfg.mhc_streams > 1:
+            n = cfg.mhc_streams
+            res = jnp.zeros((nv, n, n), jnp.float32)
+            res = res.at[:, jnp.arange(n), jnp.arange(n)].set(1.0)
+            bias = jnp.linspace(-0.2, 0.2, n, dtype=jnp.float32)
+            self.mhc_res = _p(res, (None, None, None))
+            self.mhc_pre = _p(
+                jnp.broadcast_to(bias, (nv, n)), (None, None))
+            self.mhc_post = _p(
+                jnp.broadcast_to(-bias, (nv, n)), (None, None))
+            if cfg.mhc_dynamic:
+                self.mhc_dyn = _p(
+                    jnp.zeros((nv, d, n * n + 2 * n), jnp.float32),
+                    (None, None, None),
+                )
+
         # Use an NNX dict with string keys rather than nnx.List: MaxText's
         # Muon path classifier (muon_utils.transform_logic) expects every
         # path segment to be a string.  nnx.List lowers to integer dict keys
@@ -230,7 +254,7 @@ class LoCEDModel(nnx.Module):
     # ------------------------------------------------------------------
     def to_reference_params(self) -> dict:
         """Assemble the exact pytree consumed by ``loced.model``."""
-        return {
+        out = {
             "embed": self.token_embedding.get_value(),
             "head": self.logits_dense.get_value(),
             "W_bk": self.W_bk.get_value(),
@@ -243,6 +267,15 @@ class LoCEDModel(nnx.Module):
             "norm_f": self.norm_f.get_value(),
             "cells": tuple(cell.reference_dict() for cell in self.cells.values()),
         }
+        if self.mhc_res is not None:
+            out.update(
+                mhc_res=self.mhc_res.get_value(),
+                mhc_pre=self.mhc_pre.get_value(),
+                mhc_post=self.mhc_post.get_value(),
+            )
+            if self.mhc_dyn is not None:
+                out["mhc_dyn"] = self.mhc_dyn.get_value()
+        return out
 
     def load_reference_params(self, params: dict) -> "LoCEDModel":
         """Copy a reference pytree into the NNX parameter graph."""
@@ -256,9 +289,17 @@ class LoCEDModel(nnx.Module):
         self.gate_a.set_value(params["gate_a"])
         self.gate_m.set_value(params["gate_m"])
         self.norm_f.set_value(params["norm_f"])
+        if self.mhc_res is not None:
+            self.mhc_res.set_value(params["mhc_res"])
+            self.mhc_pre.set_value(params["mhc_pre"])
+            self.mhc_post.set_value(params["mhc_post"])
+            if self.mhc_dyn is not None:
+                self.mhc_dyn.set_value(params["mhc_dyn"])
         for cell, src in zip(self.cells.values(), params["cells"]):
             cell.norm_a.set_value(src["norm_a"])
             cell.norm_m.set_value(src["norm_m"])
+            if cell.norm_magic is not None:
+                cell.norm_magic.set_value(src["norm_magic"])
             cell.attn.W_q.set_value(src["W_q"])
             cell.attn.W_fx.set_value(src["W_fx"])
             cell.attn.W_fv.set_value(src["W_fv"])
@@ -317,10 +358,11 @@ class LoCEDModel(nnx.Module):
         supervision term; ``indexer_loss`` and ``moe_lb_loss`` use MaxText's
         standard suffix names so MaxText's own ``loss_fn`` can pick them up.
         """
+        reuse_p = kwargs.pop("reuse_p", 0.0)
         del decoder_segment_ids, enable_dropout, kwargs
         tokens = decoder_input_tokens
         if model_mode == MODEL_MODE_TRAIN:
-            out = self.train_output(tokens)
+            out = self.train_output(tokens, reuse_p=reuse_p)
             self.sow(nnx.Intermediate, "loced_loss", out["loss"])
             self.sow(nnx.Intermediate, "loced_ce", out["ce"])
             self.sow(nnx.Intermediate, "loced_ce_aux", out["ce_aux"])

@@ -45,6 +45,10 @@ _LOCED_DEFAULTS: dict[str, Any] = {
     "loced_pool_m": 2,
     "loced_pool_norm_preserve": True,
     "loced_lazy_view": True,
+    "loced_magic_norm": False,
+    "loced_mhc_streams": 1,
+    "loced_mhc_sinkhorn_iters": 10,
+    "loced_mhc_dynamic": False,
     "loced_train_delta": True,
     "loced_train_prefill_frac": 0.5,
     "loced_reuse_onpolicy": True,
@@ -100,6 +104,18 @@ if MaxTextConfig is not None and Field is not None:
         )
         loced_lazy_view: bool = Field(
             True, description="Score/gather candidate segments lazily (no [B,T,C,w] view)."
+        )
+        loced_magic_norm: bool = Field(
+            False, description="Apply a module-level RMSNorm at every visit exit."
+        )
+        loced_mhc_streams: int = Field(
+            1, ge=1, description="mHC residual streams (1 disables mHC)."
+        )
+        loced_mhc_sinkhorn_iters: int = Field(
+            10, ge=1, description="Sinkhorn iterations for the mHC Birkhoff projection."
+        )
+        loced_mhc_dynamic: bool = Field(
+            False, description="Predict mHC mixing coefficients from the current state."
         )
         loced_train_delta: bool = Field(
             True, description="Simulate the prompt->generated delta store during training (D3)."
@@ -159,6 +175,10 @@ else:  # pragma: no cover - CPU-only fallback
         loced_pool_m: int = 2
         loced_pool_norm_preserve: bool = True
         loced_lazy_view: bool = True
+        loced_magic_norm: bool = False
+        loced_mhc_streams: int = 1
+        loced_mhc_sinkhorn_iters: int = 10
+        loced_mhc_dynamic: bool = False
         loced_train_delta: bool = True
         loced_train_prefill_frac: float = 0.5
         loced_reuse_onpolicy: bool = True
@@ -262,6 +282,10 @@ def loced_config_from_maxtext(config: Any):
         pool_m=int(_loced_get(config, "loced_pool_m")),
         pool_norm_preserve=bool(_loced_get(config, "loced_pool_norm_preserve")),
         lazy_view=bool(_loced_get(config, "loced_lazy_view")),
+        magic_norm=bool(_loced_get(config, "loced_magic_norm")),
+        mhc_streams=int(_loced_get(config, "loced_mhc_streams")),
+        mhc_sinkhorn_iters=int(_loced_get(config, "loced_mhc_sinkhorn_iters")),
+        mhc_dynamic=bool(_loced_get(config, "loced_mhc_dynamic")),
         train_delta=bool(_loced_get(config, "loced_train_delta")),
         train_prefill_frac=float(_loced_get(config, "loced_train_prefill_frac")),
         reuse_onpolicy=bool(_loced_get(config, "loced_reuse_onpolicy")),
@@ -358,6 +382,10 @@ def loced_config_from_mapping(mapping: Mapping[str, Any]):
         pool_m=int(get("loced_pool_m", base.pool_m)),
         pool_norm_preserve=bool(get("loced_pool_norm_preserve", base.pool_norm_preserve)),
         lazy_view=bool(get("loced_lazy_view", base.lazy_view)),
+        magic_norm=bool(get("loced_magic_norm", base.magic_norm)),
+        mhc_streams=int(get("loced_mhc_streams", base.mhc_streams)),
+        mhc_sinkhorn_iters=int(get("loced_mhc_sinkhorn_iters", base.mhc_sinkhorn_iters)),
+        mhc_dynamic=bool(get("loced_mhc_dynamic", base.mhc_dynamic)),
         train_delta=bool(get("loced_train_delta", base.train_delta)),
         train_prefill_frac=float(get("loced_train_prefill_frac", base.train_prefill_frac)),
         reuse_onpolicy=bool(get("loced_reuse_onpolicy", base.reuse_onpolicy)),

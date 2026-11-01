@@ -29,6 +29,13 @@ class LoCEDConfig:
     max_seq_len: int = 512            # prefill length budget (prompt)
     max_decode_len: int = 128         # generated-token budget per session
 
+    # --- residual-stream architecture ---
+    # Both are opt-in so the frozen 100M/T=128 checkpoint path is unchanged.
+    magic_norm: bool = False          # module-level norm at each visit exit
+    mhc_streams: int = 1              # >1 enables Manifold-Constrained Hyper-Connections
+    mhc_sinkhorn_iters: int = 10      # Birkhoff projection iterations for H_res
+    mhc_dynamic: bool = False         # predict H_pre/H_post/H_res from the current state
+
     # --- attention ---
     num_attention_heads: int = 8
     head_dim: int = 32               # per-Q-head dim (NoPE throughout)
@@ -75,6 +82,12 @@ class LoCEDConfig:
     moe_aux_weight: float = 0.01     # Switch-style load-balance auxiliary loss
     rms_norm_eps: float = 1e-6
     init_std: float = 0.02
+
+    def __post_init__(self):
+        if self.mhc_streams < 1:
+            raise ValueError("mhc_streams must be >= 1")
+        if self.mhc_sinkhorn_iters < 1:
+            raise ValueError("mhc_sinkhorn_iters must be >= 1")
 
     @property
     def num_layers(self) -> int:

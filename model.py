@@ -87,13 +87,27 @@ def count_params(params) -> int:
 # shared visit primitives
 # ---------------------------------------------------------------------------
 
+def _streams(cfg, x):
+    """Lift [B,T,d] to [B,T,n,d] when mHC is enabled."""
+    if cfg.mhc_streams == 1 or x.ndim == 4:
+        return x
+    return jnp.broadcast_to(
+        x[..., None, :], x.shape[:2] + (cfg.mhc_streams, x.shape[-1]))
+
+
+def _merge(cfg, x):
+    """Collapse mHC streams to the single feature stream used by the head,
+    bridge, indexer, and KV store."""
+    return x if x.ndim == 3 else jnp.mean(x, axis=2)
+
+
 def _q(cfg, pc, h):
     B, T, _ = h.shape
     return (h @ pc["W_q"]).reshape(B, T, cfg.num_attention_heads, cfg.head_dim)
 
 
 def _head(cfg, p, x):
-    return rmsnorm(cfg, x, p["norm_f"]) @ p["head"]
+    return rmsnorm(cfg, _merge(cfg, x), p["norm_f"]) @ p["head"]
 
 
 def _ce(logits, targets):
@@ -115,6 +129,7 @@ def _gather_valid(valid, idx):
 
 def _bridge(cfg, params, H):
     """KV Bridging: hidden states -> shared store entries (k, v, indexer-K)."""
+    H = _merge(cfg, H)
     k = H @ params["W_bk"]
     v = H @ params["W_bv"]
     ik = jax.lax.stop_gradient(k) @ params["W_ik"]
@@ -179,6 +194,7 @@ def _encode_pass(cfg, params, x, positions):
     """
     info = dict()
     maux = jnp.asarray(0.0, jnp.float32)
+    x = _streams(cfg, x)
     for k, mode in enumerate(cfg.encode_layers):
         if mode != "full":
             raise ValueError(f"encode layer {k} is '{mode}', expected 'full'")
@@ -200,6 +216,7 @@ def _decode_pass(cfg, params, x, Kg, Vg, vg, view, oracle=None,
     maux = jnp.asarray(0.0, jnp.float32)
     kls = []
     infos = []
+    x = _streams(cfg, x)
     for k, mode in enumerate(cfg.sparse_layers):
         v = V + k
         pc = params["cells"][k]
@@ -226,7 +243,7 @@ def _decode_pass(cfg, params, x, Kg, Vg, vg, view, oracle=None,
 def _anchor_select(cfg, params, x, view):
     """Inference anchor: indexer scores at the exit hidden pick the rows the
     REUSE layers inherit (top-k + forced window)."""
-    lg = indexer_scores_view(cfg, params, x, view)
+    lg = indexer_scores_view(cfg, params, _merge(cfg, x), view)
     idx = select(lg, view["valid"], view["boost"], _L(cfg, view))
     Kg, Vg = _gather(view, idx)
     vg = _gather_valid(view["valid"], idx)
@@ -301,7 +318,8 @@ def _forward_train_impl(cfg: LoCEDConfig, params: dict, tokens,
     # REUSE mixes in the indexer-selected rows (1.3) so training matches the
     # inference selector. `reuse_p=0` keeps the original oracle path.
     idx_a = select(oracle, view["valid"], view["boost"], _L(cfg, view))
-    lg_a = indexer_scores_view(cfg, params, jax.lax.stop_gradient(H_out),
+    lg_a = indexer_scores_view(cfg, params,
+                               jax.lax.stop_gradient(_merge(cfg, H_out)),
                                view)
     kl_a = kl_distill(oracle, lg_a, view["valid"])
     idx_i = (select(lg_a, view["valid"], view["boost"], _L(cfg, view))
@@ -362,7 +380,8 @@ def _forward_train_impl(cfg: LoCEDConfig, params: dict, tokens,
                logits=logits)
     if diagnostics:
         out.update(
-            H_out=H_out, probs_mean=probs_mean, view=view, oracle=oracle,
+            H_out=_merge(cfg, H_out), probs_mean=probs_mean, view=view,
+            oracle=oracle,
             idx_oracle=idx_a, idx_indexer=idx_i, anchor_logits=lg_a,
             pool_k=pool_k, per_token_k=pk, pool_last=pool_last,
             visit_infos=infos)
@@ -406,7 +425,7 @@ def prefill(cfg: LoCEDConfig, params: dict, tokens):
     store = new_store(cfg, B, params["embed"].dtype)
 
     H_out, _, _ = _encode_pass(cfg, params, x, positions)
-    store = build_pool(cfg, store, H_out, positions,
+    store = build_pool(cfg, store, _merge(cfg, H_out), positions,
                        params["W_bk"], params["W_bv"], params["W_ik"])
     pk, pv, pik = _bridge(cfg, params, H_out)
     W = cfg.window
@@ -433,7 +452,7 @@ def prefill_extend(cfg: LoCEDConfig, params: dict, store: dict, tokens,
     x = params["embed"][tokens]
 
     H_out, _, _ = _encode_pass(cfg, params, x, positions)
-    store = build_pool(cfg, store, H_out, positions,
+    store = build_pool(cfg, store, _merge(cfg, H_out), positions,
                        params["W_bk"], params["W_bv"], params["W_ik"])
     pk, pv, pik = _bridge(cfg, params, H_out)
     W, n = cfg.window, min(T, cfg.window)

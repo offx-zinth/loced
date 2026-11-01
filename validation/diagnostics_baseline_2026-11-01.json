@@ -2,7 +2,10 @@
   "config": {
     "hidden_size": 64,
     "lazy_view": true,
+    "magic_norm": false,
     "max_seq_len": 64,
+    "mhc_dynamic": false,
+    "mhc_streams": 1,
     "pool_m": 2,
     "pool_norm_preserve": true,
     "reuse_onpolicy": true,
@@ -1312,7 +1315,7 @@
           }
         ]
       },
-      "seconds": 34.40708351135254,
+      "seconds": 12.990995168685913,
       "seed": 0,
       "steps": 150
     },
@@ -2614,7 +2617,7 @@
           }
         ]
       },
-      "seconds": 38.022438764572144,
+      "seconds": 15.986467123031616,
       "seed": 0,
       "steps": 150
     }

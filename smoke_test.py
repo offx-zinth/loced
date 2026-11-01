@@ -13,6 +13,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
+from .block import sinkhorn
 from .cache import new_store
 from .config import LoCEDConfig
 from .diagnostics import (build_report, pool_norm_ratio, segment_layout,
@@ -462,6 +463,52 @@ def test_prefill_extend_lazy_matches_dense(params):
         np.testing.assert_allclose(np.asarray(s_lazy[key]),
                                    np.asarray(s_dense[key]),
                                    rtol=1e-5, atol=1e-5)
+
+
+def test_magic_norm(params):
+    """MagicNorm caps every visit with a module-level RMSNorm."""
+    cfg = dataclasses.replace(CFG, magic_norm=True)
+    p = init_model(cfg, KEY)
+    assert all("norm_magic" in cell for cell in p["cells"])
+    assert count_params(p) - count_params(params) == CFG.num_layers * CFG.hidden_size
+    tokens = _diag_batch(2, 32)
+    out = forward_train(cfg, p, tokens)
+    assert np.isfinite(float(out["loss"]))
+    assert out["logits"].shape == (2, 32, CFG.vocab_size)
+
+
+def test_mhc_streams_and_sinkhorn(params):
+    """mHC residual streams stay finite and H_res is doubly stochastic."""
+    cfg = dataclasses.replace(CFG, mhc_streams=4, magic_norm=True)
+    p = init_model(cfg, KEY)
+    assert p["mhc_res"].shape == (CFG.num_visits, 4, 4)
+    h = sinkhorn(p["mhc_res"], cfg.mhc_sinkhorn_iters)
+    np.testing.assert_allclose(np.asarray(h.sum(axis=-1)), 1.0, atol=1e-5)
+    np.testing.assert_allclose(np.asarray(h.sum(axis=-2)), 1.0, atol=1e-5)
+
+    tokens = _diag_batch(2, 32)
+    out = forward_train(cfg, p, tokens)
+    assert np.isfinite(float(out["loss"]))
+    # Streams must actually diverge; a uniform H_pre/H_post would collapse mHC
+    # back to a single residual stream.
+    from .model import _encode_pass
+    positions = jnp.broadcast_to(jnp.arange(32)[None, :], tokens.shape)
+    streams, _, _ = _encode_pass(cfg, p, p["embed"][tokens], positions)
+    assert float(np.ptp(np.asarray(streams), axis=2).mean()) > 1e-4
+    store, logits = prefill(cfg, p, tokens[:, :16])
+    assert logits.shape == (2, 1, CFG.vocab_size)
+    store, logits = decode_step(cfg, p, store, tokens[:, 16], 16)
+    assert logits.shape == (2, 1, CFG.vocab_size)
+
+
+def test_mhc_dynamic(params):
+    """The single-pass dynamic-coefficient path is differentiable and finite."""
+    cfg = dataclasses.replace(CFG, mhc_streams=4, mhc_dynamic=True)
+    p = init_model(cfg, KEY)
+    assert p["mhc_dyn"].shape == (
+        CFG.num_visits, CFG.hidden_size, 4 * 4 + 2 * 4)
+    out = forward_train(cfg, p, _diag_batch(2, 32))
+    assert np.isfinite(float(out["loss"]))
 
 
 def test_lazy_view_matches_materialized(params):
