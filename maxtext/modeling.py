@@ -160,10 +160,8 @@ class LoCEDLayer(nnx.Module):
         d = cfg.hidden_size
         self.norm_a = _p(jnp.ones((d,), jnp.float32), ("norm",))
         self.norm_m = _p(jnp.ones((d,), jnp.float32), ("norm",))
-        self.norm_magic = (
-            _p(jnp.ones((d,), jnp.float32), ("norm",))
-            if cfg.magic_norm else None
-        )
+        if cfg.magic_norm:
+            self.norm_magic = _p(jnp.ones((d,), jnp.float32), ("norm",))
         self.attn = LoCEDAttention(cfg, rngs)
         self.moe = LoCEDMoE(cfg, rngs)
 
@@ -177,7 +175,7 @@ class LoCEDLayer(nnx.Module):
             "W_o": self.attn.W_o.get_value(),
             **self.moe.reference_dict(),
         }
-        if self.norm_magic is not None:
+        if hasattr(self, "norm_magic"):
             out["norm_magic"] = self.norm_magic.get_value()
         return out
 
@@ -224,7 +222,6 @@ class LoCEDModel(nnx.Module):
         self.gate_m = _p(jnp.zeros((nv,), jnp.float32), (None,))
         self.norm_f = _p(jnp.ones((d,), jnp.float32), ("norm",))
 
-        self.mhc_res = self.mhc_pre = self.mhc_post = self.mhc_dyn = None
         if cfg.mhc_streams > 1:
             n = cfg.mhc_streams
             res = jnp.zeros((nv, n, n), jnp.float32)
@@ -267,13 +264,13 @@ class LoCEDModel(nnx.Module):
             "norm_f": self.norm_f.get_value(),
             "cells": tuple(cell.reference_dict() for cell in self.cells.values()),
         }
-        if self.mhc_res is not None:
+        if getattr(self, "mhc_res", None) is not None:
             out.update(
                 mhc_res=self.mhc_res.get_value(),
                 mhc_pre=self.mhc_pre.get_value(),
                 mhc_post=self.mhc_post.get_value(),
             )
-            if self.mhc_dyn is not None:
+            if getattr(self, "mhc_dyn", None) is not None:
                 out["mhc_dyn"] = self.mhc_dyn.get_value()
         return out
 
@@ -289,16 +286,16 @@ class LoCEDModel(nnx.Module):
         self.gate_a.set_value(params["gate_a"])
         self.gate_m.set_value(params["gate_m"])
         self.norm_f.set_value(params["norm_f"])
-        if self.mhc_res is not None:
+        if getattr(self, "mhc_res", None) is not None:
             self.mhc_res.set_value(params["mhc_res"])
             self.mhc_pre.set_value(params["mhc_pre"])
             self.mhc_post.set_value(params["mhc_post"])
-            if self.mhc_dyn is not None:
+            if getattr(self, "mhc_dyn", None) is not None:
                 self.mhc_dyn.set_value(params["mhc_dyn"])
         for cell, src in zip(self.cells.values(), params["cells"]):
             cell.norm_a.set_value(src["norm_a"])
             cell.norm_m.set_value(src["norm_m"])
-            if cell.norm_magic is not None:
+            if hasattr(cell, "norm_magic"):
                 cell.norm_magic.set_value(src["norm_magic"])
             cell.attn.W_q.set_value(src["W_q"])
             cell.attn.W_fx.set_value(src["W_fx"])
