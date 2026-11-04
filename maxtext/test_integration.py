@@ -495,7 +495,10 @@ def test_maxtext_muon_one_training_step():
     after = jax.tree.leaves(nnx.to_pure_dict(nnx.state(model)))
 
     assert np.isfinite(float(loss))
-    assert set(metrics) == {"loss", "ce", "ce_aux", "kl", "moe_aux"}
+    assert set(metrics) == {
+        "loss", "ce", "ce_aux", "kl", "moe_aux", "reuse_p",
+    }
+    assert float(metrics["reuse_p"]) == 0.0
     assert int(optimizer.step.get_value()) == 1
     # MaxText Muon must have changed the parameters (not a no-op).
     assert any(not np.array_equal(np.asarray(a), np.asarray(b)) for a, b in zip(before, after))
