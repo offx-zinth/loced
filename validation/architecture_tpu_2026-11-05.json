@@ -1,0 +1,330 @@
+{
+  "kind": "loced_magicnorm_mhc_tpu_validation",
+  "date": "2026-11-05",
+  "branch": "architecture-mhc-magicnorm",
+  "commit": "52c3648",
+  "model": "tiny synthetic config (hidden_size=64, seq_len=64, 4 layers, 8 visits)",
+  "scope": "Correctness/plumbing evidence on TPU v5e. Not a model-scale throughput or quality claim.",
+  "reference_tests": {
+    "passed": 31,
+    "exit_code": 0
+  },
+  "maxtext_tests": {
+    "passed": 21,
+    "exit_code": 0,
+    "parity_tolerance": 1e-05
+  },
+  "parity_configs": [
+    "baseline",
+    "magic_norm",
+    "mhc_static_magic",
+    "mhc_dynamic_magic"
+  ],
+  "parity": {
+    "baseline": {
+      "params": 549456,
+      "param_maxdiff": 0.0,
+      "loss_maxdiff": 0.0,
+      "logits_maxdiff": 0.0,
+      "grad_maxdiff": 0.0,
+      "prefill_logits_maxdiff": 0.0,
+      "prefill_store_maxdiff": 0.0,
+      "decode_logits_maxdiff": 0.0,
+      "sinkhorn_max_error": null,
+      "stream_ptp": null
+    },
+    "magic_norm": {
+      "params": 549712,
+      "param_maxdiff": 0.0,
+      "loss_maxdiff": 0.0,
+      "logits_maxdiff": 0.0,
+      "grad_maxdiff": 0.0,
+      "prefill_logits_maxdiff": 0.0,
+      "prefill_store_maxdiff": 0.0,
+      "decode_logits_maxdiff": 0.0,
+      "sinkhorn_max_error": null,
+      "stream_ptp": null
+    },
+    "mhc_static_magic": {
+      "params": 549904,
+      "param_maxdiff": 0.0,
+      "loss_maxdiff": 0.0,
+      "logits_maxdiff": 0.0,
+      "grad_maxdiff": 0.0,
+      "prefill_logits_maxdiff": 0.0,
+      "prefill_store_maxdiff": 0.0,
+      "decode_logits_maxdiff": 0.0,
+      "sinkhorn_max_error": 9.5367431640625e-07,
+      "stream_ptp": 0.0012540137395262718
+    },
+    "mhc_dynamic_magic": {
+      "params": 562192,
+      "param_maxdiff": 0.0,
+      "loss_maxdiff": 0.0,
+      "logits_maxdiff": 0.0,
+      "grad_maxdiff": 0.0,
+      "prefill_logits_maxdiff": 0.0,
+      "prefill_store_maxdiff": 0.0,
+      "decode_logits_maxdiff": 0.0,
+      "sinkhorn_max_error": 9.5367431640625e-07,
+      "stream_ptp": 0.0012540137395262718
+    }
+  },
+  "runs": {
+    "colab_tpu_v5e1": {
+      "accelerator": "tpu",
+      "backend": "tpu",
+      "devices": 1,
+      "reference_tests": {
+        "passed": 31,
+        "exit_code": 0,
+        "log": "/content/reference_pytest.log"
+      },
+      "maxtext_tests": {
+        "passed": 21,
+        "exit_code": 0,
+        "parity_tolerance": 1e-05,
+        "log": "/content/maxtext_pytest.log"
+      },
+      "parity_tolerance": 1e-05,
+      "parity": {
+        "baseline": {
+          "params": 549456,
+          "param_maxdiff": 0.0,
+          "loss_maxdiff": 0.0,
+          "logits_maxdiff": 0.0,
+          "grad_maxdiff": 0.0,
+          "prefill_logits_maxdiff": 0.0,
+          "prefill_store_maxdiff": 0.0,
+          "decode_logits_maxdiff": 0.0,
+          "sinkhorn_max_error": null,
+          "stream_ptp": null
+        },
+        "magic_norm": {
+          "params": 549712,
+          "param_maxdiff": 0.0,
+          "loss_maxdiff": 0.0,
+          "logits_maxdiff": 0.0,
+          "grad_maxdiff": 0.0,
+          "prefill_logits_maxdiff": 0.0,
+          "prefill_store_maxdiff": 0.0,
+          "decode_logits_maxdiff": 0.0,
+          "sinkhorn_max_error": null,
+          "stream_ptp": null
+        },
+        "mhc_static_magic": {
+          "params": 549904,
+          "param_maxdiff": 0.0,
+          "loss_maxdiff": 0.0,
+          "logits_maxdiff": 0.0,
+          "grad_maxdiff": 0.0,
+          "prefill_logits_maxdiff": 0.0,
+          "prefill_store_maxdiff": 0.0,
+          "decode_logits_maxdiff": 0.0,
+          "sinkhorn_max_error": 9.5367431640625e-07,
+          "stream_ptp": 0.0012540137395262718
+        },
+        "mhc_dynamic_magic": {
+          "params": 562192,
+          "param_maxdiff": 0.0,
+          "loss_maxdiff": 0.0,
+          "logits_maxdiff": 0.0,
+          "grad_maxdiff": 0.0,
+          "prefill_logits_maxdiff": 0.0,
+          "prefill_store_maxdiff": 0.0,
+          "decode_logits_maxdiff": 0.0,
+          "sinkhorn_max_error": 9.5367431640625e-07,
+          "stream_ptp": 0.0012540137395262718
+        }
+      },
+      "maxtext_mhc_train": {
+        "params": 562192,
+        "expected_params": 562192,
+        "losses": [
+          4.734381675720215,
+          4.5849456787109375
+        ],
+        "optimizer_step": 2,
+        "magic_norm": true,
+        "mhc_streams": 4,
+        "mhc_dynamic": true,
+        "ms_per_step_compile_included": 10265.735736000352
+      },
+      "benchmark": {
+        "baseline": {
+          "label": "baseline",
+          "params": 549456,
+          "batch": 4,
+          "seq_len": 64,
+          "warmup_steps": 2,
+          "timed_steps": 10,
+          "loss_first": 4.6528520584106445,
+          "loss_last": 4.3155012130737305,
+          "ms_per_step": 8.118651299992052,
+          "tokens_per_sec": 31532.330992002404,
+          "peak_bytes_in_use": 47819776,
+          "bytes_limit": 16909336064,
+          "magic_norm": false,
+          "mhc_streams": 1,
+          "mhc_dynamic": false
+        },
+        "magic_mhc_dynamic": {
+          "label": "magic_mhc_dynamic",
+          "params": 562192,
+          "batch": 4,
+          "seq_len": 64,
+          "warmup_steps": 2,
+          "timed_steps": 10,
+          "loss_first": 4.63718318939209,
+          "loss_last": 4.297788143157959,
+          "ms_per_step": 8.90295219996915,
+          "tokens_per_sec": 28754.506847839428,
+          "peak_bytes_in_use": 60087808,
+          "bytes_limit": 16909336064,
+          "magic_norm": true,
+          "mhc_streams": 4,
+          "mhc_dynamic": true
+        },
+        "baseline_over_mhc_speed": 0.9119055250032888,
+        "mhc_over_baseline_params": 1.0231792900614425
+      }
+    },
+    "kaggle_tpu_v5e8": {
+      "accelerator": "tpu",
+      "backend": "tpu",
+      "devices": 8,
+      "environment": {
+        "runtime": "Kaggle TPU v5e-8",
+        "device": "TPU v5 lite (v5e)",
+        "python": "3.12.16",
+        "jax": "0.11.1",
+        "maxtext": "0.2.5",
+        "memory_bytes_limit": 16909332480
+      },
+      "reference_tests": {
+        "passed": 31,
+        "exit_code": 0
+      },
+      "maxtext_tests": {
+        "passed": 21,
+        "exit_code": 0,
+        "parity_tolerance": 1e-05
+      },
+      "parity_tolerance": 1e-05,
+      "parity": {
+        "baseline": {
+          "params": 549456,
+          "param_maxdiff": 0.0,
+          "loss_maxdiff": 0.0,
+          "logits_maxdiff": 0.0,
+          "grad_maxdiff": 0.0,
+          "prefill_logits_maxdiff": 0.0,
+          "prefill_store_maxdiff": 0.0,
+          "decode_logits_maxdiff": 0.0,
+          "sinkhorn_max_error": null,
+          "stream_ptp": null
+        },
+        "magic_norm": {
+          "params": 549712,
+          "param_maxdiff": 0.0,
+          "loss_maxdiff": 0.0,
+          "logits_maxdiff": 0.0,
+          "grad_maxdiff": 0.0,
+          "prefill_logits_maxdiff": 0.0,
+          "prefill_store_maxdiff": 0.0,
+          "decode_logits_maxdiff": 0.0,
+          "sinkhorn_max_error": null,
+          "stream_ptp": null
+        },
+        "mhc_static_magic": {
+          "params": 549904,
+          "param_maxdiff": 0.0,
+          "loss_maxdiff": 0.0,
+          "logits_maxdiff": 0.0,
+          "grad_maxdiff": 0.0,
+          "prefill_logits_maxdiff": 0.0,
+          "prefill_store_maxdiff": 0.0,
+          "decode_logits_maxdiff": 0.0,
+          "sinkhorn_max_error": 9.5367431640625e-07,
+          "stream_ptp": 0.0012540137395262718
+        },
+        "mhc_dynamic_magic": {
+          "params": 562192,
+          "param_maxdiff": 0.0,
+          "loss_maxdiff": 0.0,
+          "logits_maxdiff": 0.0,
+          "grad_maxdiff": 0.0,
+          "prefill_logits_maxdiff": 0.0,
+          "prefill_store_maxdiff": 0.0,
+          "decode_logits_maxdiff": 0.0,
+          "sinkhorn_max_error": 9.5367431640625e-07,
+          "stream_ptp": 0.0012540137395262718
+        }
+      },
+      "maxtext_mhc_train": {
+        "params": 562192,
+        "expected_params": 562192,
+        "losses": [
+          4.734381675720215,
+          4.5849456787109375
+        ],
+        "optimizer_step": 2,
+        "magic_norm": true,
+        "mhc_streams": 4,
+        "mhc_dynamic": true,
+        "ms_per_step_compile_included": 8688.4
+      },
+      "benchmark": {
+        "baseline": {
+          "params": 549456,
+          "batch": 4,
+          "seq_len": 64,
+          "warmup_steps": 2,
+          "timed_steps": 10,
+          "loss_first": 4.6528520584106445,
+          "loss_last": 4.3155012130737305,
+          "ms_per_step": 12.560662200007755,
+          "tokens_per_sec": 20381.091054247277,
+          "peak_bytes_in_use": 47919616,
+          "bytes_limit": 16909332480,
+          "magic_norm": false,
+          "mhc_streams": 1,
+          "mhc_dynamic": false
+        },
+        "magic_mhc_dynamic": {
+          "params": 562192,
+          "batch": 4,
+          "seq_len": 64,
+          "warmup_steps": 2,
+          "timed_steps": 10,
+          "loss_first": 4.63718318939209,
+          "loss_last": 4.297788143157959,
+          "ms_per_step": 14.38581139998405,
+          "tokens_per_sec": 17795.311844577904,
+          "peak_bytes_in_use": 60344832,
+          "bytes_limit": 16909332480,
+          "magic_norm": true,
+          "mhc_streams": 4,
+          "mhc_dynamic": true
+        },
+        "baseline_over_mhc_speed": 0.873128518841953,
+        "mhc_over_baseline_params": 1.0231792900614425
+      }
+    }
+  },
+  "consistency": {
+    "all_parity_maxdiffs_zero": true,
+    "sinkhorn_max_error": 9.5367431640625e-07,
+    "stream_ptp": 0.0012540137395262718,
+    "muon_losses_identical": true,
+    "parameter_counts_identical": true,
+    "benchmark_speed_ratio_colab": 0.9119055250032888,
+    "benchmark_speed_ratio_kaggle": 0.873128518841953
+  },
+  "caveats": [
+    "Parity is reference JAX vs NNX on the same device; 0.0 maxdiff is expected when both lower identically.",
+    "mHC uses Sinkhorn-constrained H_res plus softmax H_pre/H_post; the fused single-pass TPU kernel and next-layer coefficient shift are not implemented.",
+    "Benchmarks are tiny-model plumbing checks with 2 warmup + 10 timed steps; ms/step varies with compile state and host.",
+    "Free Colab exposes 1 v5e chip only; the 8-device data-parallel mesh was exercised on Kaggle v5e-8."
+  ]
+}
