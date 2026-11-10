@@ -1,0 +1,1581 @@
+16.0s 1 [IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+20.5s 2 cloning https://github.com/offx-zinth/loced.git (architecture-mhc-magicnorm) -> /kaggle/working/loced
+22.9s 3 ACCELERATOR : tpu
+22.9s 4 WORK        : /kaggle/working
+22.9s 5 LOCED_ROOT  : /kaggle/working
+22.9s 6 LOCED_REF   : architecture-mhc-magicnorm
+22.9s 7 MAXTEXT_DIR : /kaggle/working/maxtext-v0.2.5
+22.9s 8 VENV        : /kaggle/working/loced-venv
+22.9s 9 nvidia-smi:
+22.9s 10 nvidia-smi not found (TPU or CPU kernel)
+23.1s 11 installing uv ...
+35.8s 12 [33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+36.0s 13 [0m[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+36.0s 14 [0m
+36.0s 15 [33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+36.0s 16 [0mUsing CPython 3.12.16 interpreter at: [36m/usr/local/bin/python3.12[39m
+36.0s 17 Creating virtual environment with seed packages at: [36mloced-venv[39m
+36.0s 18 creating Python 3.12 venv ...
+36.2s 19 Using CPython 3.12.16 interpreter at: [36m/usr/local/bin/python3.12[39m
+36.2s 20 Creating virtual environment with seed packages at: [36mloced-venv[39m
+36.2s 21 
+36.2s 22 Using CPython 3.12.16 interpreter at: [36m/usr/local/bin/python3.12[39m
+36.2s 23 Creating virtual environment with seed packages at: [36mloced-venv[39m
+36.4s 24 [1m[33mwarning[39m[0m[1m:[0m [1mFailed to hardlink files; falling back to full copy. This may lead to degraded performance.
+36.4s 25 If the cache and target directories are on different filesystems, hardlinking may not be supported.
+36.4s 26 If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.[0m
+36.5s 27 [32m+[39m [1mpip[0m[2m==26.3[0m
+36.5s 28 Cloning into '/kaggle/working/maxtext-v0.2.5'...
+36.6s 29 [1m[33mwarning[39m[0m[1m:[0m [1mFailed to hardlink files; falling back to full copy. This may lead to degraded performance.
+36.6s 30 If the cache and target directories are on different filesystems, hardlinking may not be supported.
+36.6s 31 If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.[0m
+36.6s 32 [32m+[39m [1mpip[0m[2m==26.3[0m
+36.6s 33 Cloning into '/kaggle/working/maxtext-v0.2.5'...
+36.6s 34 
+36.6s 35 [1m[33mwarning[39m[0m[1m:[0m [1mFailed to hardlink files; falling back to full copy. This may lead to degraded performance.
+36.6s 36 If the cache and target directories are on different filesystems, hardlinking may not be supported.
+36.6s 37 If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.[0m
+36.6s 38 [32m+[39m [1mpip[0m[2m==26.3[0m
+36.6s 39 Cloning into '/kaggle/working/maxtext-v0.2.5'...
+36.7s 40 Python 3.12.16
+36.7s 41 cloning MaxText maxtext-v0.2.5 ...
+38.6s 42 Note: switching to '493d5928156869b70f7198ba7bbd1a7f779233d9'.
+38.6s 43 
+38.6s 44 You are in 'detached HEAD' state. You can look around, make experimental
+38.6s 45 changes and commit them, and you can discard any commits you make in this
+38.6s 46 state without impacting any branches by switching back to a branch.
+38.6s 47 
+38.6s 48 If you want to create a new branch to retain commits you create, you may
+38.6s 49 do so (now or later) by using -c with the switch command. Example:
+38.6s 50 
+38.6s 51 git switch -c <new-branch-name>
+38.6s 52 
+38.6s 53 Or undo this operation with:
+38.6s 54 
+38.6s 55 git switch -
+38.6s 56 
+38.6s 57 Turn off this advice by setting config variable advice.detachedHead to false
+38.6s 58 
+38.8s 59 Note: switching to '493d5928156869b70f7198ba7bbd1a7f779233d9'.
+38.8s 60 
+38.8s 61 You are in 'detached HEAD' state. You can look around, make experimental
+38.8s 62 changes and commit them, and you can discard any commits you make in this
+38.8s 63 state without impacting any branches by switching back to a branch.
+38.8s 64 
+38.8s 65 If you want to create a new branch to retain commits you create, you may
+38.8s 66 do so (now or later) by using -c with the switch command. Example:
+38.8s 67 
+38.8s 68 git switch -c <new-branch-name>
+38.8s 69 
+38.8s 70 Or undo this operation with:
+38.8s 71 
+38.8s 72 git switch -
+38.8s 73 
+38.8s 74 Turn off this advice by setting config variable advice.detachedHead to false
+38.8s 75 
+38.8s 76 
+38.8s 77 Note: switching to '493d5928156869b70f7198ba7bbd1a7f779233d9'.
+38.8s 78 
+38.8s 79 You are in 'detached HEAD' state. You can look around, make experimental
+38.8s 80 changes and commit them, and you can discard any commits you make in this
+38.8s 81 state without impacting any branches by switching back to a branch.
+38.8s 82 
+38.8s 83 If you want to create a new branch to retain commits you create, you may
+38.8s 84 do so (now or later) by using -c with the switch command. Example:
+38.8s 85 
+38.8s 86 git switch -c <new-branch-name>
+38.8s 87 
+38.8s 88 Or undo this operation with:
+38.8s 89 
+38.8s 90 git switch -
+38.8s 91 
+38.8s 92 Turn off this advice by setting config variable advice.detachedHead to false
+38.8s 93 
+39.2s 94 [2mUsing Python 3.12.16 environment at: /kaggle/working/loced-venv[0m
+39.3s 95 installing maxtext[tpu] (resolution=lowest) ...
+39.4s 96 [2mUsing Python 3.12.16 environment at: /kaggle/working/loced-venv[0m
+39.4s 97 
+39.4s 98 [2mUsing Python 3.12.16 environment at: /kaggle/working/loced-venv[0m
+42.7s 99 [36m[1mBuilding[0m[39m maxtext[2m @ file:///kaggle/working/maxtext-v0.2.5[0m
+42.9s 100 [36m[1mBuilding[0m[39m maxtext[2m @ file:///kaggle/working/maxtext-v0.2.5[0m
+42.9s 101 
+42.9s 102 [36m[1mBuilding[0m[39m maxtext[2m @ file:///kaggle/working/maxtext-v0.2.5[0m
+43.2s 103 [32m[1mBuilt[0m[39m maxtext[2m @ file:///kaggle/working/maxtext-v0.2.5[0m
+43.4s 104 [32m[1mBuilt[0m[39m maxtext[2m @ file:///kaggle/working/maxtext-v0.2.5[0m
+43.4s 105 
+43.4s 106 [32m[1mBuilt[0m[39m maxtext[2m @ file:///kaggle/working/maxtext-v0.2.5[0m
+48.0s 107 [2mResolved [1m234 packages[0m [2min 8.86s[0m[0m
+48.2s 108 [36m[1mDownloading[0m[39m google-api-python-client [2m(15.3MiB)[0m
+48.2s 109 [36m[1mDownloading[0m[39m google-genai [2m(1.1MiB)[0m
+48.2s 110 [36m[1mDownloading[0m[39m tiktoken [2m(1.1MiB)[0m
+48.2s 111 [36m[1mDownloading[0m[39m pygments [2m(1.2MiB)[0m
+48.2s 112 [36m[1mDownloading[0m[39m hf-xet [2m(4.3MiB)[0m
+48.2s 113 [36m[1mDownloading[0m[39m numpy [2m(15.3MiB)[0m
+48.2s 114 [36m[1mDownloading[0m[39m cryptography [2m(4.5MiB)[0m
+48.2s 115 [36m[1mDownloading[0m[39m hypothesis [2m(1.1MiB)[0m
+48.2s 116 [36m[1mDownloading[0m[39m pydantic-core [2m(2.0MiB)[0m
+48.2s 117 [36m[1mDownloading[0m[39m keras [2m(2.3MiB)[0m
+48.2s 118 [36m[1mDownloading[0m[39m pandas [2m(10.3MiB)[0m
+48.2s 119 [36m[1mDownloading[0m[39m tensorboard-plugin-profile [2m(5.2MiB)[0m
+48.2s 120 [36m[1mDownloading[0m[39m aiohttp [2m(1.7MiB)[0m
+48.2s 121 [36m[1mDownloading[0m[39m tokamax [2m(1.3MiB)[0m
+48.2s 122 [36m[1mDownloading[0m[39m pycryptodomex [2m(2.2MiB)[0m
+48.2s 123 [36m[1mDownloading[0m[39m pyarrow [2m(47.8MiB)[0m
+48.2s 124 [36m[1mDownloading[0m[39m uvloop [2m(4.2MiB)[0m
+48.2s 125 [36m[1mDownloading[0m[39m zstandard [2m(5.3MiB)[0m
+48.2s 126 [36m[1mDownloading[0m[39m xprof [2m(23.6MiB)[0m
+48.2s 127 [36m[1mDownloading[0m[39m kiwisolver [2m(1.4MiB)[0m
+48.2s 128 [36m[1mDownloading[0m[39m scipy [2m(33.7MiB)[0m
+48.2s 129 [36m[1mDownloading[0m[39m matplotlib [2m(9.6MiB)[0m
+48.2s 130 [36m[1mDownloading[0m[39m h5py [2m(4.7MiB)[0m
+48.2s 131 [36m[1mDownloading[0m[39m sentencepiece [2m(1.3MiB)[0m
+48.2s 132 [36m[1mDownloading[0m[39m virtualenv [2m(5.2MiB)[0m
+48.2s 133 [36m[1mDownloading[0m[39m jaxlib [2m(83.8MiB)[0m
+48.2s 134 [36m[1mDownloading[0m[39m jax [2m(3.1MiB)[0m
+48.2s 135 [36m[1mDownloading[0m[39m networkx [2m(2.0MiB)[0m
+48.2s 136 [36m[1mDownloading[0m[39m lxml [2m(5.0MiB)[0m
+48.2s 137 [36m[1mDownloading[0m[39m fonttools [2m(4.8MiB)[0m
+48.2s 138 [36m[1mDownloading[0m[39m google-cloud-aiplatform [2m(9.0MiB)[0m
+48.2s 139 [36m[1mDownloading[0m[39m isort [2m(1.6MiB)[0m
+48.2s 140 [36m[1mDownloading[0m[39m array-record [2m(4.8MiB)[0m
+48.2s 141 [36m[1mDownloading[0m[39m transformers [2m(11.7MiB)[0m
+48.2s 142 [36m[1mDownloading[0m[39m sympy [2m(5.5MiB)[0m
+48.2s 143 [36m[1mDownloading[0m[39m libcst [2m(2.2MiB)[0m
+48.2s 144 [36m[1mDownloading[0m[39m pillow [2m(6.6MiB)[0m
+48.2s 145 [36m[1mDownloading[0m[39m tokenizers [2m(3.2MiB)[0m
+48.2s 146 [36m[1mDownloading[0m[39m libclang [2m(23.4MiB)[0m
+48.2s 147 [36m[1mDownloading[0m[39m tensorstore [2m(20.6MiB)[0m
+48.2s 148 [36m[1mDownloading[0m[39m libtpu [2m(206.5MiB)[0m
+48.2s 149 [36m[1mDownloading[0m[39m pytype [2m(4.5MiB)[0m
+48.2s 150 [36m[1mDownloading[0m[39m grpcio [2m(6.7MiB)[0m
+48.2s 151 [36m[1mDownloading[0m[39m nltk [2m(1.7MiB)[0m
+48.2s 152 [36m[1mDownloading[0m[39m nvidia-cuda-cccl [2m(3.3MiB)[0m
+48.2s 153 [36m[1mDownloading[0m[39m black [2m(1.8MiB)[0m
+48.2s 154 [36m[1mDownloading[0m[39m orbax-checkpoint [2m(1.3MiB)[0m
+48.2s 155 [2mResolved [1m234 packages[0m [2min 8.86s[0m[0m
+48.2s 156 [36m[1mDownloading[0m[39m google-api-python-client [2m(15.3MiB)[0m
+48.2s 157 [36m[1mDownloading[0m[39m google-genai [2m(1.1MiB)[0m
+48.2s 158 [36m[1mDownloading[0m[39m tiktoken [2m(1.1MiB)[0m
+48.2s 159 [36m[1mDownloading[0m[39m pygments [2m(1.2MiB)[0m
+48.2s 160 [36m[1mDownloading[0m[39m hf-xet [2m(4.3MiB)[0m
+48.2s 161 [36m[1mDownloading[0m[39m numpy [2m(15.3MiB)[0m
+48.2s 162 [36m[1mDownloading[0m[39m cryptography [2m(4.5MiB)[0m
+48.2s 163 [36m[1mDownloading[0m[39m hypothesis [2m(1.1MiB)[0m
+48.2s 164 [36m[1mDownloading[0m[39m pydantic-core [2m(2.0MiB)[0m
+48.2s 165 [36m[1mDownloading[0m[39m keras [2m(2.3MiB)[0m
+48.2s 166 [36m[1mDownloading[0m[39m pandas [2m(10.3MiB)[0m
+48.2s 167 [36m[1mDownloading[0m[39m tensorboard-plugin-profile [2m(5.2MiB)[0m
+48.2s 168 [36m[1mDownloading[0m[39m aiohttp [2m(1.7MiB)[0m
+48.2s 169 [36m[1mDownloading[0m[39m tokamax [2m(1.3MiB)[0m
+48.2s 170 [36m[1mDownloading[0m[39m pycryptodomex [2m(2.2MiB)[0m
+48.2s 171 [36m[1mDownloading[0m[39m pyarrow [2m(47.8MiB)[0m
+48.2s 172 [36m[1mDownloading[0m[39m uvloop [2m(4.2MiB)[0m
+48.2s 173 [36m[1mDownloading[0m[39m zstandard [2m(5.3MiB)[0m
+48.2s 174 [36m[1mDownloading[0m[39m xprof [2m(23.6MiB)[0m
+48.2s 175 [36m[1mDownloading[0m[39m kiwisolver [2m(1.4MiB)[0m
+48.2s 176 [36m[1mDownloading[0m[39m scipy [2m(33.7MiB)[0m
+48.2s 177 [36m[1mDownloading[0m[39m matplotlib [2m(9.6MiB)[0m
+48.2s 178 [36m[1mDownloading[0m[39m h5py [2m(4.7MiB)[0m
+48.2s 179 [36m[1mDownloading[0m[39m sentencepiece [2m(1.3MiB)[0m
+48.2s 180 [36m[1mDownloading[0m[39m virtualenv [2m(5.2MiB)[0m
+48.2s 181 [36m[1mDownloading[0m[39m jaxlib [2m(83.8MiB)[0m
+48.2s 182 [36m[1mDownloading[0m[39m jax [2m(3.1MiB)[0m
+48.2s 183 [36m[1mDownloading[0m[39m networkx [2m(2.0MiB)[0m
+48.2s 184 [36m[1mDownloading[0m[39m lxml [2m(5.0MiB)[0m
+48.2s 185 [36m[1mDownloading[0m[39m fonttools [2m(4.8MiB)[0m
+48.2s 186 [36m[1mDownloading[0m[39m google-cloud-aiplatform [2m(9.0MiB)[0m
+48.2s 187 [36m[1mDownloading[0m[39m isort [2m(1.6MiB)[0m
+48.2s 188 [36m[1mDownloading[0m[39m array-record [2m(4.8MiB)[0m
+48.2s 189 [36m[1mDownloading[0m[39m transformers [2m(11.7MiB)[0m
+48.2s 190 [36m[1mDownloading[0m[39m sympy [2m(5.5MiB)[0m
+48.2s 191 [36m[1mDownloading[0m[39m libcst [2m(2.2MiB)[0m
+48.2s 192 [36m[1mDownloading[0m[39m pillow [2m(6.6MiB)[0m
+48.2s 193 [36m[1mDownloading[0m[39m tokenizers [2m(3.2MiB)[0m
+48.2s 194 [36m[1mDownloading[0m[39m libclang [2m(23.4MiB)[0m
+48.2s 195 [36m[1mDownloading[0m[39m tensorstore [2m(20.6MiB)[0m
+48.2s 196 [36m[1mDownloading[0m[39m libtpu [2m(206.5MiB)[0m
+48.2s 197 [36m[1mDownloading[0m[39m pytype [2m(4.5MiB)[0m
+48.2s 198 [36m[1mDownloading[0m[39m grpcio [2m(6.7MiB)[0m
+48.2s 199 [36m[1mDownloading[0m[39m nltk [2m(1.7MiB)[0m
+48.2s 200 [36m[1mDownloading[0m[39m nvidia-cuda-cccl [2m(3.3MiB)[0m
+48.2s 201 [36m[1mDownloading[0m[39m black [2m(1.8MiB)[0m
+48.2s 202 [36m[1mDownloading[0m[39m orbax-checkpoint [2m(1.3MiB)[0m
+48.2s 203 
+48.2s 204 [2mResolved [1m234 packages[0m [2min 8.86s[0m[0m
+48.2s 205 [36m[1mDownloading[0m[39m google-api-python-client [2m(15.3MiB)[0m
+48.2s 206 [36m[1mDownloading[0m[39m google-genai [2m(1.1MiB)[0m
+48.2s 207 [36m[1mDownloading[0m[39m tiktoken [2m(1.1MiB)[0m
+48.2s 208 [36m[1mDownloading[0m[39m pygments [2m(1.2MiB)[0m
+48.2s 209 [36m[1mDownloading[0m[39m hf-xet [2m(4.3MiB)[0m
+48.2s 210 [36m[1mDownloading[0m[39m numpy [2m(15.3MiB)[0m
+48.2s 211 [36m[1mDownloading[0m[39m cryptography [2m(4.5MiB)[0m
+48.2s 212 [36m[1mDownloading[0m[39m hypothesis [2m(1.1MiB)[0m
+48.2s 213 [36m[1mDownloading[0m[39m pydantic-core [2m(2.0MiB)[0m
+48.2s 214 [36m[1mDownloading[0m[39m keras [2m(2.3MiB)[0m
+48.2s 215 [36m[1mDownloading[0m[39m pandas [2m(10.3MiB)[0m
+48.2s 216 [36m[1mDownloading[0m[39m tensorboard-plugin-profile [2m(5.2MiB)[0m
+48.2s 217 [36m[1mDownloading[0m[39m aiohttp [2m(1.7MiB)[0m
+48.2s 218 [36m[1mDownloading[0m[39m tokamax [2m(1.3MiB)[0m
+48.2s 219 [36m[1mDownloading[0m[39m pycryptodomex [2m(2.2MiB)[0m
+48.2s 220 [36m[1mDownloading[0m[39m pyarrow [2m(47.8MiB)[0m
+48.2s 221 [36m[1mDownloading[0m[39m uvloop [2m(4.2MiB)[0m
+48.2s 222 [36m[1mDownloading[0m[39m zstandard [2m(5.3MiB)[0m
+48.2s 223 [36m[1mDownloading[0m[39m xprof [2m(23.6MiB)[0m
+48.2s 224 [36m[1mDownloading[0m[39m kiwisolver [2m(1.4MiB)[0m
+48.2s 225 [36m[1mDownloading[0m[39m scipy [2m(33.7MiB)[0m
+48.2s 226 [36m[1mDownloading[0m[39m matplotlib [2m(9.6MiB)[0m
+48.2s 227 [36m[1mDownloading[0m[39m h5py [2m(4.7MiB)[0m
+48.2s 228 [36m[1mDownloading[0m[39m sentencepiece [2m(1.3MiB)[0m
+48.2s 229 [36m[1mDownloading[0m[39m virtualenv [2m(5.2MiB)[0m
+48.2s 230 [36m[1mDownloading[0m[39m jaxlib [2m(83.8MiB)[0m
+48.2s 231 [36m[1mDownloading[0m[39m jax [2m(3.1MiB)[0m
+48.2s 232 [36m[1mDownloading[0m[39m networkx [2m(2.0MiB)[0m
+48.2s 233 [36m[1mDownloading[0m[39m lxml [2m(5.0MiB)[0m
+48.2s 234 [36m[1mDownloading[0m[39m fonttools [2m(4.8MiB)[0m
+48.2s 235 [36m[1mDownloading[0m[39m google-cloud-aiplatform [2m(9.0MiB)[0m
+48.2s 236 [36m[1mDownloading[0m[39m isort [2m(1.6MiB)[0m
+48.2s 237 [36m[1mDownloading[0m[39m array-record [2m(4.8MiB)[0m
+48.2s 238 [36m[1mDownloading[0m[39m transformers [2m(11.7MiB)[0m
+48.2s 239 [36m[1mDownloading[0m[39m sympy [2m(5.5MiB)[0m
+48.2s 240 [36m[1mDownloading[0m[39m libcst [2m(2.2MiB)[0m
+48.2s 241 [36m[1mDownloading[0m[39m pillow [2m(6.6MiB)[0m
+48.2s 242 [36m[1mDownloading[0m[39m tokenizers [2m(3.2MiB)[0m
+48.2s 243 [36m[1mDownloading[0m[39m libclang [2m(23.4MiB)[0m
+48.2s 244 [36m[1mDownloading[0m[39m tensorstore [2m(20.6MiB)[0m
+48.2s 245 [36m[1mDownloading[0m[39m libtpu [2m(206.5MiB)[0m
+48.2s 246 [36m[1mDownloading[0m[39m pytype [2m(4.5MiB)[0m
+48.2s 247 [36m[1mDownloading[0m[39m grpcio [2m(6.7MiB)[0m
+48.2s 248 [36m[1mDownloading[0m[39m nltk [2m(1.7MiB)[0m
+48.2s 249 [36m[1mDownloading[0m[39m nvidia-cuda-cccl [2m(3.3MiB)[0m
+48.2s 250 [36m[1mDownloading[0m[39m black [2m(1.8MiB)[0m
+48.2s 251 [36m[1mDownloading[0m[39m orbax-checkpoint [2m(1.3MiB)[0m
+49.5s 252 [36m[1mDownloaded[0m[39m tiktoken
+49.7s 253 [36m[1mDownloaded[0m[39m tiktoken
+49.7s 254 
+49.7s 255 [36m[1mDownloaded[0m[39m tiktoken
+49.7s 256 [36m[1mDownloaded[0m[39m hypothesis
+49.9s 257 [36m[1mDownloaded[0m[39m hypothesis
+49.9s 258 
+49.9s 259 [36m[1mDownloaded[0m[39m hypothesis
+50.7s 260 [36m[1mDownloaded[0m[39m pygments
+50.9s 261 [36m[1mDownloaded[0m[39m sentencepiece
+50.9s 262 [36m[1mDownloaded[0m[39m pygments
+50.9s 263 [36m[1mDownloaded[0m[39m sentencepiece
+50.9s 264 
+50.9s 265 [36m[1mDownloaded[0m[39m pygments
+50.9s 266 [36m[1mDownloaded[0m[39m sentencepiece
+51.0s 267 [36m[1mDownloaded[0m[39m kiwisolver
+51.2s 268 [36m[1mDownloaded[0m[39m kiwisolver
+51.2s 269 
+51.2s 270 [36m[1mDownloaded[0m[39m kiwisolver
+52.8s 271 [36m[1mDownloaded[0m[39m isort
+52.8s 272 [36m[1mDownloaded[0m[39m pydantic-core
+52.8s 273 [36m[1mDownloaded[0m[39m aiohttp
+53.0s 274 [36m[1mDownloaded[0m[39m isort
+53.0s 275 [36m[1mDownloaded[0m[39m pydantic-core
+53.0s 276 [36m[1mDownloaded[0m[39m aiohttp
+53.0s 277 
+53.0s 278 [36m[1mDownloaded[0m[39m isort
+53.0s 279 [36m[1mDownloaded[0m[39m pydantic-core
+53.0s 280 [36m[1mDownloaded[0m[39m aiohttp
+53.8s 281 [36m[1mDownloaded[0m[39m black
+53.8s 282 [36m[1mDownloaded[0m[39m tokamax
+53.8s 283 [36m[1mDownloaded[0m[39m pycryptodomex
+54.0s 284 [36m[1mDownloaded[0m[39m black
+54.0s 285 [36m[1mDownloaded[0m[39m tokamax
+54.0s 286 [36m[1mDownloaded[0m[39m pycryptodomex
+54.0s 287 
+54.0s 288 [36m[1mDownloaded[0m[39m black
+54.0s 289 [36m[1mDownloaded[0m[39m tokamax
+54.0s 290 [36m[1mDownloaded[0m[39m pycryptodomex
+54.6s 291 [36m[1mDownloaded[0m[39m nltk
+54.8s 292 [36m[1mDownloaded[0m[39m nltk
+54.8s 293 
+54.8s 294 [36m[1mDownloaded[0m[39m nltk
+55.1s 295 [36m[1mDownloaded[0m[39m google-genai
+55.3s 296 [36m[1mDownloaded[0m[39m google-genai
+55.3s 297 
+55.3s 298 [36m[1mDownloaded[0m[39m google-genai
+56.5s 299 [36m[1mDownloaded[0m[39m libcst
+56.5s 300 [36m[1mDownloaded[0m[39m networkx
+56.7s 301 [36m[1mDownloaded[0m[39m libcst
+56.7s 302 [36m[1mDownloaded[0m[39m networkx
+56.7s 303 
+56.7s 304 [36m[1mDownloaded[0m[39m libcst
+56.7s 305 [36m[1mDownloaded[0m[39m networkx
+58.0s 306 [36m[1mDownloaded[0m[39m jax
+58.1s 307 [36m[1mDownloaded[0m[39m tokenizers
+58.2s 308 [36m[1mDownloaded[0m[39m jax
+58.2s 309 [36m[1mDownloaded[0m[39m tokenizers
+58.2s 310 
+58.2s 311 [36m[1mDownloaded[0m[39m jax
+58.2s 312 [36m[1mDownloaded[0m[39m tokenizers
+62.2s 313 [36m[1mDownloaded[0m[39m keras
+62.4s 314 [36m[1mDownloaded[0m[39m orbax-checkpoint
+62.4s 315 [36m[1mDownloaded[0m[39m keras
+62.4s 316 [36m[1mDownloaded[0m[39m orbax-checkpoint
+62.4s 317 
+62.4s 318 [36m[1mDownloaded[0m[39m keras
+62.4s 319 [36m[1mDownloaded[0m[39m orbax-checkpoint
+64.0s 320 [36m[1mBuilding[0m[39m antlr4-python3-runtime[2m==4.9.3[0m
+64.1s 321 [36m[1mDownloaded[0m[39m nvidia-cuda-cccl
+64.1s 322 [36m[1mDownloaded[0m[39m hf-xet
+64.2s 323 [36m[1mBuilding[0m[39m antlr4-python3-runtime[2m==4.9.3[0m
+64.2s 324 [36m[1mDownloaded[0m[39m nvidia-cuda-cccl
+64.2s 325 [36m[1mDownloaded[0m[39m hf-xet
+64.2s 326 
+64.2s 327 [36m[1mBuilding[0m[39m antlr4-python3-runtime[2m==4.9.3[0m
+64.2s 328 [36m[1mDownloaded[0m[39m nvidia-cuda-cccl
+64.2s 329 [36m[1mDownloaded[0m[39m hf-xet
+64.8s 330 [36m[1mDownloaded[0m[39m uvloop
+65.0s 331 [36m[1mDownloaded[0m[39m uvloop
+65.0s 332 
+65.0s 333 [36m[1mDownloaded[0m[39m uvloop
+65.3s 334 [36m[1mDownloaded[0m[39m h5py
+65.4s 335 [36m[1mDownloaded[0m[39m array-record
+65.5s 336 [36m[1mDownloaded[0m[39m h5py
+65.5s 337 [36m[1mDownloaded[0m[39m array-record
+65.5s 338 
+65.5s 339 [36m[1mDownloaded[0m[39m h5py
+65.5s 340 [36m[1mDownloaded[0m[39m array-record
+65.5s 341 [36m[1mDownloaded[0m[39m tensorboard-plugin-profile
+65.6s 342 [36m[1mDownloaded[0m[39m lxml
+65.7s 343 [36m[1mDownloaded[0m[39m tensorboard-plugin-profile
+65.7s 344 [36m[1mDownloaded[0m[39m lxml
+65.7s 345 
+65.7s 346 [36m[1mDownloaded[0m[39m tensorboard-plugin-profile
+65.7s 347 [36m[1mDownloaded[0m[39m lxml
+65.9s 348 [36m[1mDownloaded[0m[39m cryptography
+65.9s 349 [36m[1mDownloaded[0m[39m fonttools
+66.1s 350 [36m[1mDownloaded[0m[39m cryptography
+66.1s 351 [36m[1mDownloaded[0m[39m fonttools
+66.1s 352 
+66.1s 353 [36m[1mDownloaded[0m[39m cryptography
+66.1s 354 [36m[1mDownloaded[0m[39m fonttools
+66.1s 355 [32m[1mBuilt[0m[39m antlr4-python3-runtime[2m==4.9.3[0m
+66.3s 356 [36m[1mDownloaded[0m[39m zstandard
+66.3s 357 [32m[1mBuilt[0m[39m antlr4-python3-runtime[2m==4.9.3[0m
+66.3s 358 [36m[1mDownloaded[0m[39m zstandard
+66.3s 359 
+66.3s 360 [32m[1mBuilt[0m[39m antlr4-python3-runtime[2m==4.9.3[0m
+66.3s 361 [36m[1mDownloaded[0m[39m zstandard
+66.7s 362 [36m[1mDownloaded[0m[39m virtualenv
+66.8s 363 [36m[1mDownloaded[0m[39m pytype
+66.9s 364 [36m[1mDownloaded[0m[39m virtualenv
+66.9s 365 [36m[1mDownloaded[0m[39m pytype
+66.9s 366 
+66.9s 367 [36m[1mDownloaded[0m[39m virtualenv
+66.9s 368 [36m[1mDownloaded[0m[39m pytype
+67.0s 369 [36m[1mDownloaded[0m[39m sympy
+67.2s 370 [36m[1mDownloaded[0m[39m sympy
+67.2s 371 
+67.2s 372 [36m[1mDownloaded[0m[39m sympy
+69.5s 373 [36m[1mDownloaded[0m[39m pillow
+69.6s 374 [36m[1mDownloaded[0m[39m grpcio
+69.7s 375 [36m[1mDownloaded[0m[39m pillow
+69.7s 376 [36m[1mDownloaded[0m[39m grpcio
+69.7s 377 
+69.7s 378 [36m[1mDownloaded[0m[39m pillow
+69.7s 379 [36m[1mDownloaded[0m[39m grpcio
+71.3s 380 [36m[1mDownloaded[0m[39m google-cloud-aiplatform
+71.5s 381 [36m[1mDownloaded[0m[39m google-cloud-aiplatform
+71.5s 382 
+71.5s 383 [36m[1mDownloaded[0m[39m google-cloud-aiplatform
+71.8s 384 [36m[1mDownloaded[0m[39m matplotlib
+72.0s 385 [36m[1mDownloaded[0m[39m pandas
+72.0s 386 [36m[1mDownloaded[0m[39m matplotlib
+72.0s 387 [36m[1mDownloaded[0m[39m pandas
+72.0s 388 
+72.0s 389 [36m[1mDownloaded[0m[39m matplotlib
+72.0s 390 [36m[1mDownloaded[0m[39m pandas
+72.7s 391 [36m[1mDownloaded[0m[39m transformers
+72.9s 392 [36m[1mDownloaded[0m[39m transformers
+72.9s 393 
+72.9s 394 [36m[1mDownloaded[0m[39m transformers
+73.7s 395 [36m[1mDownloaded[0m[39m google-api-python-client
+73.7s 396 [36m[1mDownloaded[0m[39m numpy
+73.9s 397 [36m[1mDownloaded[0m[39m google-api-python-client
+73.9s 398 [36m[1mDownloaded[0m[39m numpy
+73.9s 399 
+73.9s 400 [36m[1mDownloaded[0m[39m google-api-python-client
+73.9s 401 [36m[1mDownloaded[0m[39m numpy
+75.2s 402 [36m[1mDownloaded[0m[39m tensorstore
+75.4s 403 [36m[1mDownloaded[0m[39m tensorstore
+75.4s 404 
+75.4s 405 [36m[1mDownloaded[0m[39m tensorstore
+76.1s 406 [36m[1mDownloaded[0m[39m xprof
+76.2s 407 [36m[1mDownloaded[0m[39m libclang
+76.3s 408 [36m[1mDownloaded[0m[39m xprof
+76.3s 409 [36m[1mDownloaded[0m[39m libclang
+76.3s 410 
+76.3s 411 [36m[1mDownloaded[0m[39m xprof
+76.3s 412 [36m[1mDownloaded[0m[39m libclang
+78.5s 413 [36m[1mDownloaded[0m[39m scipy
+78.7s 414 [36m[1mDownloaded[0m[39m scipy
+78.7s 415 
+78.7s 416 [36m[1mDownloaded[0m[39m scipy
+81.1s 417 [36m[1mDownloaded[0m[39m pyarrow
+81.3s 418 [36m[1mDownloaded[0m[39m pyarrow
+81.3s 419 
+81.3s 420 [36m[1mDownloaded[0m[39m pyarrow
+87.9s 421 [36m[1mDownloaded[0m[39m jaxlib
+88.1s 422 [36m[1mDownloaded[0m[39m jaxlib
+88.1s 423 
+88.1s 424 [36m[1mDownloaded[0m[39m jaxlib
+99.7s 425 [36m[1mDownloaded[0m[39m libtpu
+99.7s 426 [2mPrepared [1m232 packages[0m [2min 51.63s[0m[0m
+99.9s 427 [36m[1mDownloaded[0m[39m libtpu
+99.9s 428 [2mPrepared [1m232 packages[0m [2min 51.63s[0m[0m
+99.9s 429 
+99.9s 430 [36m[1mDownloaded[0m[39m libtpu
+99.9s 431 [2mPrepared [1m232 packages[0m [2min 51.63s[0m[0m
+102.7s 432 [2mInstalled [1m234 packages[0m [2min 2.98s[0m[0m
+102.7s 433 [32m+[39m [1mabsl-py[0m[2m==2.5.0[0m
+102.7s 434 [32m+[39m [1maiofiles[0m[2m==25.1.0[0m
+102.7s 435 [32m+[39m [1maiohappyeyeballs[0m[2m==2.7.1[0m
+102.7s 436 [32m+[39m [1maiohttp[0m[2m==3.14.3[0m
+102.7s 437 [32m+[39m [1maiosignal[0m[2m==1.4.0[0m
+102.7s 438 [32m+[39m [1mannotated-doc[0m[2m==0.0.5[0m
+102.7s 439 [32m+[39m [1mannotated-types[0m[2m==0.8.0[0m
+102.7s 440 [32m+[39m [1mantlr4-python3-runtime[0m[2m==4.9.3[0m
+102.7s 441 [32m+[39m [1manyio[0m[2m==4.15.1[0m
+102.7s 442 [32m+[39m [1maqtp[0m[2m==0.9.0[0m
+102.7s 443 [32m+[39m [1marray-record[0m[2m==0.8.3[0m
+102.7s 444 [32m+[39m [1mastroid[0m[2m==4.0.4[0m
+102.7s 445 [32m+[39m [1mastunparse[0m[2m==1.6.3[0m
+102.7s 446 [32m+[39m [1mattrs[0m[2m==26.1.0[0m
+102.7s 447 [32m+[39m [1mauditwheel[0m[2m==6.8.1[0m
+102.7s 448 [32m+[39m [1mblack[0m[2m==26.5.1[0m
+102.7s 449 [32m+[39m [1mblobfile[0m[2m==3.3.0[0m
+102.7s 450 [32m+[39m [1mbuild[0m[2m==1.5.0[0m
+102.7s 451 [32m+[39m [1mcertifi[0m[2m==2026.7.22[0m
+102.7s 452 [32m+[39m [1mcffi[0m[2m==2.1.1[0m
+102.7s 453 [32m+[39m [1mcfgv[0m[2m==3.5.0[0m
+102.7s 454 [32m+[39m [1mcharset-normalizer[0m[2m==3.5.1[0m
+102.7s 455 [32m+[39m [1mcheroot[0m[2m==11.1.2[0m
+102.7s 456 [32m+[39m [1mchex[0m[2m==0.1.92[0m
+102.7s 457 [32m+[39m [1mclick[0m[2m==8.5.0[0m
+102.7s 458 [32m+[39m [1mcloud-accelerator-diagnostics[0m[2m==0.1.1[0m
+102.7s 459 [32m+[39m [1mcloudpickle[0m[2m==3.1.2[0m
+102.7s 460 [32m+[39m [1mcolorama[0m[2m==0.4.6[0m
+102.7s 461 [32m+[39m [1mcontourpy[0m[2m==1.3.3[0m
+102.7s 462 [32m+[39m [1mcoverage[0m[2m==7.16.1[0m
+102.7s 463 [32m+[39m [1mcryptography[0m[2m==50.0.1[0m
+102.7s 464 [32m+[39m [1mcycler[0m[2m==0.12.1[0m
+102.7s 465 [32m+[39m [1mdatasets[0m[2m==4.8.5[0m
+102.7s 466 [32m+[39m [1mdecorator[0m[2m==5.3.1[0m
+102.7s 467 [32m+[39m [1mdefusedxml[0m[2m==0.7.1[0m
+102.7s 468 [32m+[39m [1mdill[0m[2m==0.4.1[0m
+102.7s 469 [32m+[39m [1mdistlib[0m[2m==0.4.3[0m
+102.7s 470 [32m+[39m [1mdistro[0m[2m==1.9.0[0m
+102.7s 471 [32m+[39m [1mdocstring-parser[0m[2m==0.18.0[0m
+102.7s 472 [32m+[39m [1mdrjax[0m[2m==0.2.1[0m
+102.7s 473 [32m+[39m [1meinshape[0m[2m==1.0[0m
+102.7s 474 [32m+[39m [1metils[0m[2m==1.14.0[0m
+102.7s 475 [32m+[39m [1mevaluate[0m[2m==0.2.0[0m
+102.7s 476 [32m+[39m [1mexecnet[0m[2m==2.1.2[0m
+102.7s 477 [32m+[39m [1mfastapi[0m[2m==0.141.1[0m
+102.7s 478 [32m+[39m [1mfilelock[0m[2m==3.32.3[0m
+102.7s 479 [32m+[39m [1mfire[0m[2m==0.7.1[0m
+102.7s 480 [32m+[39m [1mflatbuffers[0m[2m==25.12.19[0m
+102.7s 481 [32m+[39m [1mflax[0m[2m==0.12.9[0m
+102.7s 482 [32m+[39m [1mfonttools[0m[2m==4.63.0[0m
+102.7s 483 [32m+[39m [1mfrozenlist[0m[2m==1.8.0[0m
+102.7s 484 [32m+[39m [1mfsspec[0m[2m==2026.2.0[0m
+102.7s 485 [32m+[39m [1mgast[0m[2m==0.7.0[0m
+102.7s 486 [32m+[39m [1mgcsfs[0m[2m==2026.2.0[0m
+102.7s 487 [32m+[39m [1mgoogle-api-core[0m[2m==2.38.0[0m
+102.7s 488 [32m+[39m [1mgoogle-api-python-client[0m[2m==2.200.0[0m
+102.7s 489 [32m+[39m [1mgoogle-auth[0m[2m==2.58.0[0m
+102.7s 490 [32m+[39m [1mgoogle-auth-httplib2[0m[2m==0.4.2[0m
+102.7s 491 [32m+[39m [1mgoogle-auth-oauthlib[0m[2m==1.4.1[0m
+102.7s 492 [32m+[39m [1mgoogle-cloud-aiplatform[0m[2m==2.1.3[0m
+102.7s 493 [32m+[39m [1mgoogle-cloud-appengine-logging[0m[2m==1.10.0[0m
+102.7s 494 [32m+[39m [1mgoogle-cloud-audit-log[0m[2m==0.6.2[0m
+102.7s 495 [32m+[39m [1mgoogle-cloud-bigquery[0m[2m==3.45.2[0m
+102.7s 496 [32m+[39m [1mgoogle-cloud-core[0m[2m==2.7.0[0m
+102.7s 497 [32m+[39m [1mgoogle-cloud-logging[0m[2m==3.16.3[0m
+102.7s 498 [32m+[39m [1mgoogle-cloud-mldiagnostics[0m[2m==1.0.8[0m
+102.7s 499 [32m+[39m [1mgoogle-cloud-monitoring[0m[2m==2.31.0[0m
+102.7s 500 [32m+[39m [1mgoogle-cloud-resource-manager[0m[2m==1.18.0[0m
+102.7s 501 [32m+[39m [1mgoogle-cloud-storage[0m[2m==3.14.1[0m
+102.7s 502 [32m+[39m [1mgoogle-cloud-storage-control[0m[2m==1.15.0[0m
+102.7s 503 [32m+[39m [1mgoogle-crc32c[0m[2m==1.8.0[0m
+102.7s 504 [32m+[39m [1mgoogle-genai[0m[2m==2.24.0[0m
+102.7s 505 [32m+[39m [1mgoogle-pasta[0m[2m==0.2.0[0m
+102.7s 506 [32m+[39m [1mgoogle-resumable-media[0m[2m==2.10.2[0m
+102.7s 507 [32m+[39m [1mgoogleapis-common-protos[0m[2m==1.75.3[0m
+102.7s 508 [32m+[39m [1mgrain[0m[2m==0.2.18[0m
+102.7s 509 [32m+[39m [1mgrpc-google-iam-v1[0m[2m==0.14.5[0m
+102.7s 510 [32m+[39m [1mgrpcio[0m[2m==1.83.0[0m
+102.7s 511 [32m+[39m [1mgrpcio-status[0m[2m==1.83.0[0m
+102.7s 512 [32m+[39m [1mgviz-api[0m[2m==1.10.0[0m
+102.7s 513 [32m+[39m [1mh11[0m[2m==0.16.0[0m
+102.7s 514 [32m+[39m [1mh5py[0m[2m==3.14.0[0m
+102.7s 515 [32m+[39m [1mhf-xet[0m[2m==1.6.0[0m
+102.7s 516 [32m+[39m [1mhttpcore[0m[2m==1.0.9[0m
+102.7s 517 [32m+[39m [1mhttplib2[0m[2m==0.32.0[0m
+102.7s 518 [32m+[39m [1mhttpx[0m[2m==0.28.1[0m
+102.7s 519 [32m+[39m [1mhuggingface-hub[0m[2m==1.32.0[0m
+102.7s 520 [32m+[39m [1mhumanize[0m[2m==4.16.0[0m
+102.7s 521 [32m+[39m [1mhypothesis[0m[2m==6.165.10[0m
+102.7s 522 [32m+[39m [1midentify[0m[2m==2.6.19[0m
+102.7s 523 [32m+[39m [1midna[0m[2m==3.18[0m
+102.7s 524 [32m+[39m [1mimmutabledict[0m[2m==4.3.1[0m
+102.7s 525 [32m+[39m [1mimportlab[0m[2m==0.8.1[0m
+102.7s 526 [32m+[39m [1miniconfig[0m[2m==2.3.0[0m
+102.7s 527 [32m+[39m [1misort[0m[2m==9.0.1[0m
+102.7s 528 [32m+[39m [1mjaraco-functools[0m[2m==4.6.0[0m
+102.7s 529 [32m+[39m [1mjax[0m[2m==0.11.1[0m
+102.7s 530 [32m+[39m [1mjaxlib[0m[2m==0.11.1[0m
+102.7s 531 [32m+[39m [1mjaxtyping[0m[2m==0.3.11[0m
+102.7s 532 [32m+[39m [1mjinja2[0m[2m==3.1.6[0m
+102.7s 533 [32m+[39m [1mjoblib[0m[2m==1.6.0[0m
+102.7s 534 [32m+[39m [1mjsonlines[0m[2m==4.0.0[0m
+102.7s 535 [32m+[39m [1mkeras[0m[2m==3.15.1[0m
+102.7s 536 [32m+[39m [1mkiwisolver[0m[2m==1.5.0[0m
+102.7s 537 [32m+[39m [1mlatex2sympy2-extended[0m[2m==1.11.0[0m
+102.7s 538 [32m+[39m [1mlibclang[0m[2m==18.1.1[0m
+102.7s 539 [32m+[39m [1mlibcst[0m[2m==1.9.0[0m
+102.7s 540 [32m+[39m [1mlibtpu[0m[2m==0.0.46[0m
+102.7s 541 [32m+[39m [1mlxml[0m[2m==6.1.3[0m
+102.7s 542 [32m+[39m [1mmarkdown[0m[2m==3.10.2[0m
+102.7s 543 [32m+[39m [1mmarkdown-it-py[0m[2m==4.2.0[0m
+102.7s 544 [32m+[39m [1mmarkupsafe[0m[2m==3.0.3[0m
+102.7s 545 [32m+[39m [1mmath-verify[0m[2m==0.9.0[0m
+102.7s 546 [32m+[39m [1mmatplotlib[0m[2m==3.11.1[0m
+102.7s 547 [32m+[39m [1mmaxtext[0m[2m==0.2.5 (from file:///kaggle/working/maxtext-v0.2.5)[0m
+102.7s 548 [32m+[39m [1mmccabe[0m[2m==0.7.0[0m
+102.7s 549 [32m+[39m [1mmdurl[0m[2m==0.1.2[0m
+102.7s 550 [32m+[39m [1mml-collections[0m[2m==1.1.0[0m
+102.7s 551 [32m+[39m [1mml-dtypes[0m[2m==0.6.0[0m
+102.7s 552 [32m+[39m [1mml-goodput-measurement[0m[2m==0.2.3[0m
+102.7s 553 [32m+[39m [1mmore-itertools[0m[2m==11.1.0[0m
+102.7s 554 [32m+[39m [1mmpmath[0m[2m==1.4.1[0m
+102.7s 555 [32m+[39m [1mmsgpack[0m[2m==1.2.2[0m
+102.7s 556 [32m+[39m [1mmsgspec[0m[2m==0.21.1[0m
+102.7s 557 [32m+[39m [1mmultidict[0m[2m==6.9.1[0m
+102.7s 558 [32m+[39m [1mmultiprocess[0m[2m==0.70.19[0m
+102.7s 559 [32m+[39m [1mmypy-extensions[0m[2m==1.1.0[0m
+102.7s 560 [32m+[39m [1mnamex[0m[2m==0.1.0[0m
+102.7s 561 [32m+[39m [1mnetworkx[0m[2m==3.7[0m
+102.7s 562 [32m+[39m [1mninja[0m[2m==1.13.2[0m
+102.7s 563 [32m+[39m [1mnltk[0m[2m==3.10.3[0m
+102.7s 564 [32m+[39m [1mnodeenv[0m[2m==1.10.0[0m
+102.7s 565 [32m+[39m [1mnumpy[0m[2m==2.1.3[0m
+102.7s 566 [32m+[39m [1mnumpy-typing-compat[0m[2m==20260602.2.1[0m
+102.7s 567 [32m+[39m [1mnvidia-cuda-cccl[0m[2m==13.3.3.4.1[0m
+102.7s 568 [32m+[39m [1mnvidia-ml-py[0m[2m==13.610.43[0m
+102.7s 569 [32m+[39m [1moauthlib[0m[2m==3.3.1[0m
+102.7s 570 [32m+[39m [1momegaconf[0m[2m==2.3.1[0m
+102.7s 571 [32m+[39m [1mopentelemetry-api[0m[2m==1.44.0[0m
+102.7s 572 [32m+[39m [1mopt-einsum[0m[2m==3.4.0[0m
+102.7s 573 [32m+[39m [1moptax[0m[2m==0.2.8[0m
+102.7s 574 [32m+[39m [1moptree[0m[2m==0.19.1[0m
+102.7s 575 [32m+[39m [1moptype[0m[2m==0.18.0[0m
+102.7s 576 [32m+[39m [1morbax-checkpoint[0m[2m==0.12.4[0m
+102.7s 577 [32m+[39m [1mpackaging[0m[2m==26.3[0m
+102.7s 578 [32m+[39m [1mpandas[0m[2m==3.0.6[0m
+102.7s 579 [32m+[39m [1mparameterized[0m[2m==0.9.0[0m
+102.7s 580 [32m+[39m [1mpathspec[0m[2m==1.1.1[0m
+102.7s 581 [32m+[39m [1mpathwaysutils[0m[2m==0.1.11[0m
+102.7s 582 [32m+[39m [1mpillow[0m[2m==12.3.0[0m
+102.7s 583 [32m+[39m [1mplatformdirs[0m[2m==4.11.11[0m
+102.7s 584 [32m+[39m [1mpluggy[0m[2m==1.6.0[0m
+102.7s 585 [32m+[39m [1mportpicker[0m[2m==1.6.0[0m
+102.7s 586 [32m+[39m [1mpre-commit[0m[2m==4.6.2[0m
+102.7s 587 [32m+[39m [1mprometheus-client[0m[2m==0.26.0[0m
+102.7s 588 [32m+[39m [1mpropcache[0m[2m==0.5.4[0m
+102.7s 589 [32m+[39m [1mproto-plus[0m[2m==1.28.4[0m
+102.7s 590 [32m+[39m [1mprotobuf[0m[2m==6.33.6[0m
+102.7s 591 [32m+[39m [1mpsutil[0m[2m==7.2.2[0m
+102.7s 592 [32m+[39m [1mpyarrow[0m[2m==25.0.1[0m
+102.7s 593 [32m+[39m [1mpyasn1[0m[2m==0.6.4[0m
+102.7s 594 [32m+[39m [1mpyasn1-modules[0m[2m==0.4.2[0m
+102.7s 595 [32m+[39m [1mpycnite[0m[2m==2024.7.31[0m
+102.7s 596 [32m+[39m [1mpycparser[0m[2m==3.0[0m
+102.7s 597 [32m+[39m [1mpycryptodomex[0m[2m==3.23.0[0m
+102.7s 598 [32m+[39m [1mpydantic[0m[2m==2.13.5[0m
+102.7s 599 [32m+[39m [1mpydantic-core[0m[2m==2.46.5[0m
+102.7s 600 [32m+[39m [1mpydot[0m[2m==4.0.1[0m
+102.7s 601 [32m+[39m [1mpyelftools[0m[2m==0.33[0m
+102.7s 602 [32m+[39m [1mpygments[0m[2m==2.21.0[0m
+102.7s 603 [32m+[39m [1mpyink[0m[2m==26.5.1[0m
+102.7s 604 [32m+[39m [1mpylint[0m[2m==4.0.8[0m
+102.7s 605 [32m+[39m [1mpynvml[0m[2m==13.0.1[0m
+102.7s 606 [32m+[39m [1mpyparsing[0m[2m==3.3.2[0m
+102.7s 607 [32m+[39m [1mpyproject-hooks[0m[2m==1.2.0[0m
+102.7s 608 [32m+[39m [1mpytest[0m[2m==9.1.1[0m
+102.7s 609 [32m+[39m [1mpytest-xdist[0m[2m==3.8.0[0m
+102.7s 610 [32m+[39m [1mpython-dateutil[0m[2m==2.9.0.post0[0m
+102.7s 611 [32m+[39m [1mpython-discovery[0m[2m==1.6.1[0m
+102.7s 612 [32m+[39m [1mpytokens[0m[2m==0.4.1[0m
+102.7s 613 [32m+[39m [1mpytype[0m[2m==2024.10.11[0m
+102.7s 614 [32m+[39m [1mpyyaml[0m[2m==6.0.3[0m
+102.7s 615 [32m+[39m [1mqwix[0m[2m==0.1.8[0m
+102.7s 616 [32m+[39m [1mregex[0m[2m==2026.9.10[0m
+102.7s 617 [32m+[39m [1mrequests[0m[2m==2.34.2[0m
+102.7s 618 [32m+[39m [1mrequests-oauthlib[0m[2m==2.0.0[0m
+102.7s 619 [32m+[39m [1mresponses[0m[2m==0.18.0[0m
+102.7s 620 [32m+[39m [1mrich[0m[2m==15.0.0[0m
+102.7s 621 [32m+[39m [1msafetensors[0m[2m==0.8.0[0m
+102.7s 622 [32m+[39m [1mscipy[0m[2m==1.18.0[0m
+102.7s 623 [32m+[39m [1mscipy-stubs[0m[2m==1.18.0.1[0m
+102.7s 624 [32m+[39m [1msentencepiece[0m[2m==0.2.2[0m
+102.7s 625 [32m+[39m [1msetuptools[0m[2m==84.0.0[0m
+102.7s 626 [32m+[39m [1mshellingham[0m[2m==1.5.4[0m
+102.7s 627 [32m+[39m [1mshortuuid[0m[2m==1.0.13[0m
+102.7s 628 [32m+[39m [1msimplejson[0m[2m==4.1.2[0m
+102.7s 629 [32m+[39m [1msix[0m[2m==1.17.0[0m
+102.7s 630 [32m+[39m [1msniffio[0m[2m==1.3.1[0m
+102.7s 631 [32m+[39m [1msortedcontainers[0m[2m==2.4.0[0m
+102.7s 632 [32m+[39m [1mstarlette[0m[2m==1.6.0[0m
+102.7s 633 [32m+[39m [1msympy[0m[2m==1.12[0m
+102.7s 634 [32m+[39m [1mtabulate[0m[2m==0.10.0[0m
+102.7s 635 [32m+[39m [1mtenacity[0m[2m==9.1.4[0m
+102.7s 636 [32m+[39m [1mtensorboard-plugin-profile[0m[2m==2.13.0[0m
+102.7s 637 [32m+[39m [1mtensorboardx[0m[2m==2.6.5[0m
+102.7s 638 [32m+[39m [1mtensorstore[0m[2m==0.1.85[0m
+102.7s 639 [32m+[39m [1mtermcolor[0m[2m==3.3.0[0m
+102.7s 640 [32m+[39m [1mtiktoken[0m[2m==0.14.0[0m
+102.7s 641 [32m+[39m [1mtokamax[0m[2m==0.0.14[0m
+102.7s 642 [32m+[39m [1mtokenizers[0m[2m==0.23.2[0m
+102.7s 643 [32m+[39m [1mtoml[0m[2m==0.10.2[0m
+102.7s 644 [32m+[39m [1mtomlkit[0m[2m==0.15.1[0m
+102.7s 645 [32m+[39m [1mtoolz[0m[2m==1.1.0[0m
+102.7s 646 [32m+[39m [1mtqdm[0m[2m==4.70.1[0m
+102.7s 647 [32m+[39m [1mtransformers[0m[2m==5.17.0[0m
+102.7s 648 [32m+[39m [1mtreescope[0m[2m==0.1.10[0m
+102.7s 649 [32m+[39m [1mtypeguard[0m[2m==2.13.3[0m
+102.7s 650 [32m+[39m [1mtyper[0m[2m==0.27.2[0m
+102.7s 651 [32m+[39m [1mtyping-extensions[0m[2m==4.16.0[0m
+102.7s 652 [32m+[39m [1mtyping-inspection[0m[2m==0.4.4[0m
+102.7s 653 [32m+[39m [1muritemplate[0m[2m==4.2.0[0m
+102.7s 654 [32m+[39m [1murllib3[0m[2m==2.7.0[0m
+102.7s 655 [32m+[39m [1muvicorn[0m[2m==0.53.0[0m
+102.7s 656 [32m+[39m [1muvloop[0m[2m==0.22.1[0m
+102.7s 657 [32m+[39m [1mvirtualenv[0m[2m==21.9.0[0m
+102.7s 658 [32m+[39m [1mwadler-lindig[0m[2m==0.1.7[0m
+102.7s 659 [32m+[39m [1mwebsockets[0m[2m==16.1.1[0m
+102.7s 660 [32m+[39m [1mwerkzeug[0m[2m==3.1.8[0m
+102.7s 661 [32m+[39m [1mwheel[0m[2m==0.48.0[0m
+102.7s 662 [32m+[39m [1mxprof[0m[2m==2.23.1[0m
+102.7s 663 [32m+[39m [1mxxhash[0m[2m==4.0.1[0m
+102.7s 664 [32m+[39m [1myarl[0m[2m==1.25.1[0m
+102.7s 665 [32m+[39m [1mzipp[0m[2m==4.1.0[0m
+102.7s 666 [32m+[39m [1mzstandard[0m[2m==0.25.0[0m
+102.7s 667 [1m[33mwarning[39m[0m[1m:[0m [1mThe transitive dependency `etils` is unpinned. Consider setting a lower bound with a constraint when using `--resolution lowest` to avoid using outdated versions.[0m
+102.7s 668 [1m[33mwarning[39m[0m[1m:[0m [1mThe transitive dependency `google-cloud-aiplatform` is unpinned. Consider setting a lower bound with a constraint when using `--resolution lowest` to avoid using outdated versions.[0m
+102.7s 669 [2mUsing Python 3.12.16 environment at: loced-venv[0m
+102.9s 670 [2mInstalled [1m234 packages[0m [2min 2.98s[0m[0m
+102.9s 671 [32m+[39m [1mabsl-py[0m[2m==2.5.0[0m
+102.9s 672 [32m+[39m [1maiofiles[0m[2m==25.1.0[0m
+102.9s 673 [32m+[39m [1maiohappyeyeballs[0m[2m==2.7.1[0m
+102.9s 674 [32m+[39m [1maiohttp[0m[2m==3.14.3[0m
+102.9s 675 [32m+[39m [1maiosignal[0m[2m==1.4.0[0m
+102.9s 676 [32m+[39m [1mannotated-doc[0m[2m==0.0.5[0m
+102.9s 677 [32m+[39m [1mannotated-types[0m[2m==0.8.0[0m
+102.9s 678 [32m+[39m [1mantlr4-python3-runtime[0m[2m==4.9.3[0m
+102.9s 679 [32m+[39m [1manyio[0m[2m==4.15.1[0m
+102.9s 680 [32m+[39m [1maqtp[0m[2m==0.9.0[0m
+102.9s 681 [32m+[39m [1marray-record[0m[2m==0.8.3[0m
+102.9s 682 [32m+[39m [1mastroid[0m[2m==4.0.4[0m
+102.9s 683 [32m+[39m [1mastunparse[0m[2m==1.6.3[0m
+102.9s 684 [32m+[39m [1mattrs[0m[2m==26.1.0[0m
+102.9s 685 [32m+[39m [1mauditwheel[0m[2m==6.8.1[0m
+102.9s 686 [32m+[39m [1mblack[0m[2m==26.5.1[0m
+102.9s 687 [32m+[39m [1mblobfile[0m[2m==3.3.0[0m
+102.9s 688 [32m+[39m [1mbuild[0m[2m==1.5.0[0m
+102.9s 689 [32m+[39m [1mcertifi[0m[2m==2026.7.22[0m
+102.9s 690 [32m+[39m [1mcffi[0m[2m==2.1.1[0m
+102.9s 691 [32m+[39m [1mcfgv[0m[2m==3.5.0[0m
+102.9s 692 [32m+[39m [1mcharset-normalizer[0m[2m==3.5.1[0m
+102.9s 693 [32m+[39m [1mcheroot[0m[2m==11.1.2[0m
+102.9s 694 [32m+[39m [1mchex[0m[2m==0.1.92[0m
+102.9s 695 [32m+[39m [1mclick[0m[2m==8.5.0[0m
+102.9s 696 [32m+[39m [1mcloud-accelerator-diagnostics[0m[2m==0.1.1[0m
+102.9s 697 [32m+[39m [1mcloudpickle[0m[2m==3.1.2[0m
+102.9s 698 [32m+[39m [1mcolorama[0m[2m==0.4.6[0m
+102.9s 699 [32m+[39m [1mcontourpy[0m[2m==1.3.3[0m
+102.9s 700 [32m+[39m [1mcoverage[0m[2m==7.16.1[0m
+102.9s 701 [32m+[39m [1mcryptography[0m[2m==50.0.1[0m
+102.9s 702 [32m+[39m [1mcycler[0m[2m==0.12.1[0m
+102.9s 703 [32m+[39m [1mdatasets[0m[2m==4.8.5[0m
+102.9s 704 [32m+[39m [1mdecorator[0m[2m==5.3.1[0m
+102.9s 705 [32m+[39m [1mdefusedxml[0m[2m==0.7.1[0m
+102.9s 706 [32m+[39m [1mdill[0m[2m==0.4.1[0m
+102.9s 707 [32m+[39m [1mdistlib[0m[2m==0.4.3[0m
+102.9s 708 [32m+[39m [1mdistro[0m[2m==1.9.0[0m
+102.9s 709 [32m+[39m [1mdocstring-parser[0m[2m==0.18.0[0m
+102.9s 710 [32m+[39m [1mdrjax[0m[2m==0.2.1[0m
+102.9s 711 [32m+[39m [1meinshape[0m[2m==1.0[0m
+102.9s 712 [32m+[39m [1metils[0m[2m==1.14.0[0m
+102.9s 713 [32m+[39m [1mevaluate[0m[2m==0.2.0[0m
+102.9s 714 [32m+[39m [1mexecnet[0m[2m==2.1.2[0m
+102.9s 715 [32m+[39m [1mfastapi[0m[2m==0.141.1[0m
+102.9s 716 [32m+[39m [1mfilelock[0m[2m==3.32.3[0m
+102.9s 717 [32m+[39m [1mfire[0m[2m==0.7.1[0m
+102.9s 718 [32m+[39m [1mflatbuffers[0m[2m==25.12.19[0m
+102.9s 719 [32m+[39m [1mflax[0m[2m==0.12.9[0m
+102.9s 720 [32m+[39m [1mfonttools[0m[2m==4.63.0[0m
+102.9s 721 [32m+[39m [1mfrozenlist[0m[2m==1.8.0[0m
+102.9s 722 [32m+[39m [1mfsspec[0m[2m==2026.2.0[0m
+102.9s 723 [32m+[39m [1mgast[0m[2m==0.7.0[0m
+102.9s 724 [32m+[39m [1mgcsfs[0m[2m==2026.2.0[0m
+102.9s 725 [32m+[39m [1mgoogle-api-core[0m[2m==2.38.0[0m
+102.9s 726 [32m+[39m [1mgoogle-api-python-client[0m[2m==2.200.0[0m
+102.9s 727 [32m+[39m [1mgoogle-auth[0m[2m==2.58.0[0m
+102.9s 728 [32m+[39m [1mgoogle-auth-httplib2[0m[2m==0.4.2[0m
+102.9s 729 [32m+[39m [1mgoogle-auth-oauthlib[0m[2m==1.4.1[0m
+102.9s 730 [32m+[39m [1mgoogle-cloud-aiplatform[0m[2m==2.1.3[0m
+102.9s 731 [32m+[39m [1mgoogle-cloud-appengine-logging[0m[2m==1.10.0[0m
+102.9s 732 [32m+[39m [1mgoogle-cloud-audit-log[0m[2m==0.6.2[0m
+102.9s 733 [32m+[39m [1mgoogle-cloud-bigquery[0m[2m==3.45.2[0m
+102.9s 734 [32m+[39m [1mgoogle-cloud-core[0m[2m==2.7.0[0m
+102.9s 735 [32m+[39m [1mgoogle-cloud-logging[0m[2m==3.16.3[0m
+102.9s 736 [32m+[39m [1mgoogle-cloud-mldiagnostics[0m[2m==1.0.8[0m
+102.9s 737 [32m+[39m [1mgoogle-cloud-monitoring[0m[2m==2.31.0[0m
+102.9s 738 [32m+[39m [1mgoogle-cloud-resource-manager[0m[2m==1.18.0[0m
+102.9s 739 [32m+[39m [1mgoogle-cloud-storage[0m[2m==3.14.1[0m
+102.9s 740 [32m+[39m [1mgoogle-cloud-storage-control[0m[2m==1.15.0[0m
+102.9s 741 [32m+[39m [1mgoogle-crc32c[0m[2m==1.8.0[0m
+102.9s 742 [32m+[39m [1mgoogle-genai[0m[2m==2.24.0[0m
+102.9s 743 [32m+[39m [1mgoogle-pasta[0m[2m==0.2.0[0m
+102.9s 744 [32m+[39m [1mgoogle-resumable-media[0m[2m==2.10.2[0m
+102.9s 745 [32m+[39m [1mgoogleapis-common-protos[0m[2m==1.75.3[0m
+102.9s 746 [32m+[39m [1mgrain[0m[2m==0.2.18[0m
+102.9s 747 [32m+[39m [1mgrpc-google-iam-v1[0m[2m==0.14.5[0m
+102.9s 748 [32m+[39m [1mgrpcio[0m[2m==1.83.0[0m
+102.9s 749 [32m+[39m [1mgrpcio-status[0m[2m==1.83.0[0m
+102.9s 750 [32m+[39m [1mgviz-api[0m[2m==1.10.0[0m
+102.9s 751 [32m+[39m [1mh11[0m[2m==0.16.0[0m
+102.9s 752 [32m+[39m [1mh5py[0m[2m==3.14.0[0m
+102.9s 753 [32m+[39m [1mhf-xet[0m[2m==1.6.0[0m
+102.9s 754 [32m+[39m [1mhttpcore[0m[2m==1.0.9[0m
+102.9s 755 [32m+[39m [1mhttplib2[0m[2m==0.32.0[0m
+102.9s 756 [32m+[39m [1mhttpx[0m[2m==0.28.1[0m
+102.9s 757 [32m+[39m [1mhuggingface-hub[0m[2m==1.32.0[0m
+102.9s 758 [32m+[39m [1mhumanize[0m[2m==4.16.0[0m
+102.9s 759 [32m+[39m [1mhypothesis[0m[2m==6.165.10[0m
+102.9s 760 [32m+[39m [1midentify[0m[2m==2.6.19[0m
+102.9s 761 [32m+[39m [1midna[0m[2m==3.18[0m
+102.9s 762 [32m+[39m [1mimmutabledict[0m[2m==4.3.1[0m
+102.9s 763 [32m+[39m [1mimportlab[0m[2m==0.8.1[0m
+102.9s 764 [32m+[39m [1miniconfig[0m[2m==2.3.0[0m
+102.9s 765 [32m+[39m [1misort[0m[2m==9.0.1[0m
+102.9s 766 [32m+[39m [1mjaraco-functools[0m[2m==4.6.0[0m
+102.9s 767 [32m+[39m [1mjax[0m[2m==0.11.1[0m
+102.9s 768 [32m+[39m [1mjaxlib[0m[2m==0.11.1[0m
+102.9s 769 [32m+[39m [1mjaxtyping[0m[2m==0.3.11[0m
+102.9s 770 [32m+[39m [1mjinja2[0m[2m==3.1.6[0m
+102.9s 771 [32m+[39m [1mjoblib[0m[2m==1.6.0[0m
+102.9s 772 [32m+[39m [1mjsonlines[0m[2m==4.0.0[0m
+102.9s 773 [32m+[39m [1mkeras[0m[2m==3.15.1[0m
+102.9s 774 [32m+[39m [1mkiwisolver[0m[2m==1.5.0[0m
+102.9s 775 [32m+[39m [1mlatex2sympy2-extended[0m[2m==1.11.0[0m
+102.9s 776 [32m+[39m [1mlibclang[0m[2m==18.1.1[0m
+102.9s 777 [32m+[39m [1mlibcst[0m[2m==1.9.0[0m
+102.9s 778 [32m+[39m [1mlibtpu[0m[2m==0.0.46[0m
+102.9s 779 [32m+[39m [1mlxml[0m[2m==6.1.3[0m
+102.9s 780 [32m+[39m [1mmarkdown[0m[2m==3.10.2[0m
+102.9s 781 [32m+[39m [1mmarkdown-it-py[0m[2m==4.2.0[0m
+102.9s 782 [32m+[39m [1mmarkupsafe[0m[2m==3.0.3[0m
+102.9s 783 [32m+[39m [1mmath-verify[0m[2m==0.9.0[0m
+102.9s 784 [32m+[39m [1mmatplotlib[0m[2m==3.11.1[0m
+102.9s 785 [32m+[39m [1mmaxtext[0m[2m==0.2.5 (from file:///kaggle/working/maxtext-v0.2.5)[0m
+102.9s 786 [32m+[39m [1mmccabe[0m[2m==0.7.0[0m
+102.9s 787 [32m+[39m [1mmdurl[0m[2m==0.1.2[0m
+102.9s 788 [32m+[39m [1mml-collections[0m[2m==1.1.0[0m
+102.9s 789 [32m+[39m [1mml-dtypes[0m[2m==0.6.0[0m
+102.9s 790 [32m+[39m [1mml-goodput-measurement[0m[2m==0.2.3[0m
+102.9s 791 [32m+[39m [1mmore-itertools[0m[2m==11.1.0[0m
+102.9s 792 [32m+[39m [1mmpmath[0m[2m==1.4.1[0m
+102.9s 793 [32m+[39m [1mmsgpack[0m[2m==1.2.2[0m
+102.9s 794 [32m+[39m [1mmsgspec[0m[2m==0.21.1[0m
+102.9s 795 [32m+[39m [1mmultidict[0m[2m==6.9.1[0m
+102.9s 796 [32m+[39m [1mmultiprocess[0m[2m==0.70.19[0m
+102.9s 797 [32m+[39m [1mmypy-extensions[0m[2m==1.1.0[0m
+102.9s 798 [32m+[39m [1mnamex[0m[2m==0.1.0[0m
+102.9s 799 [32m+[39m [1mnetworkx[0m[2m==3.7[0m
+102.9s 800 [32m+[39m [1mninja[0m[2m==1.13.2[0m
+102.9s 801 [32m+[39m [1mnltk[0m[2m==3.10.3[0m
+102.9s 802 [32m+[39m [1mnodeenv[0m[2m==1.10.0[0m
+102.9s 803 [32m+[39m [1mnumpy[0m[2m==2.1.3[0m
+102.9s 804 [32m+[39m [1mnumpy-typing-compat[0m[2m==20260602.2.1[0m
+102.9s 805 [32m+[39m [1mnvidia-cuda-cccl[0m[2m==13.3.3.4.1[0m
+102.9s 806 [32m+[39m [1mnvidia-ml-py[0m[2m==13.610.43[0m
+102.9s 807 [32m+[39m [1moauthlib[0m[2m==3.3.1[0m
+102.9s 808 [32m+[39m [1momegaconf[0m[2m==2.3.1[0m
+102.9s 809 [32m+[39m [1mopentelemetry-api[0m[2m==1.44.0[0m
+102.9s 810 [32m+[39m [1mopt-einsum[0m[2m==3.4.0[0m
+102.9s 811 [32m+[39m [1moptax[0m[2m==0.2.8[0m
+102.9s 812 [32m+[39m [1moptree[0m[2m==0.19.1[0m
+102.9s 813 [32m+[39m [1moptype[0m[2m==0.18.0[0m
+102.9s 814 [32m+[39m [1morbax-checkpoint[0m[2m==0.12.4[0m
+102.9s 815 [32m+[39m [1mpackaging[0m[2m==26.3[0m
+102.9s 816 [32m+[39m [1mpandas[0m[2m==3.0.6[0m
+102.9s 817 [32m+[39m [1mparameterized[0m[2m==0.9.0[0m
+102.9s 818 [32m+[39m [1mpathspec[0m[2m==1.1.1[0m
+102.9s 819 [32m+[39m [1mpathwaysutils[0m[2m==0.1.11[0m
+102.9s 820 [32m+[39m [1mpillow[0m[2m==12.3.0[0m
+102.9s 821 [32m+[39m [1mplatformdirs[0m[2m==4.11.11[0m
+102.9s 822 [32m+[39m [1mpluggy[0m[2m==1.6.0[0m
+102.9s 823 [32m+[39m [1mportpicker[0m[2m==1.6.0[0m
+102.9s 824 [32m+[39m [1mpre-commit[0m[2m==4.6.2[0m
+102.9s 825 [32m+[39m [1mprometheus-client[0m[2m==0.26.0[0m
+102.9s 826 [32m+[39m [1mpropcache[0m[2m==0.5.4[0m
+102.9s 827 [32m+[39m [1mproto-plus[0m[2m==1.28.4[0m
+102.9s 828 [32m+[39m [1mprotobuf[0m[2m==6.33.6[0m
+102.9s 829 [32m+[39m [1mpsutil[0m[2m==7.2.2[0m
+102.9s 830 [32m+[39m [1mpyarrow[0m[2m==25.0.1[0m
+102.9s 831 [32m+[39m [1mpyasn1[0m[2m==0.6.4[0m
+102.9s 832 [32m+[39m [1mpyasn1-modules[0m[2m==0.4.2[0m
+102.9s 833 [32m+[39m [1mpycnite[0m[2m==2024.7.31[0m
+102.9s 834 [32m+[39m [1mpycparser[0m[2m==3.0[0m
+102.9s 835 [32m+[39m [1mpycryptodomex[0m[2m==3.23.0[0m
+102.9s 836 [32m+[39m [1mpydantic[0m[2m==2.13.5[0m
+102.9s 837 [32m+[39m [1mpydantic-core[0m[2m==2.46.5[0m
+102.9s 838 [32m+[39m [1mpydot[0m[2m==4.0.1[0m
+102.9s 839 [32m+[39m [1mpyelftools[0m[2m==0.33[0m
+102.9s 840 [32m+[39m [1mpygments[0m[2m==2.21.0[0m
+102.9s 841 [32m+[39m [1mpyink[0m[2m==26.5.1[0m
+102.9s 842 [32m+[39m [1mpylint[0m[2m==4.0.8[0m
+102.9s 843 [32m+[39m [1mpynvml[0m[2m==13.0.1[0m
+102.9s 844 [32m+[39m [1mpyparsing[0m[2m==3.3.2[0m
+102.9s 845 [32m+[39m [1mpyproject-hooks[0m[2m==1.2.0[0m
+102.9s 846 [32m+[39m [1mpytest[0m[2m==9.1.1[0m
+102.9s 847 [32m+[39m [1mpytest-xdist[0m[2m==3.8.0[0m
+102.9s 848 [32m+[39m [1mpython-dateutil[0m[2m==2.9.0.post0[0m
+102.9s 849 [32m+[39m [1mpython-discovery[0m[2m==1.6.1[0m
+102.9s 850 [32m+[39m [1mpytokens[0m[2m==0.4.1[0m
+102.9s 851 [32m+[39m [1mpytype[0m[2m==2024.10.11[0m
+102.9s 852 [32m+[39m [1mpyyaml[0m[2m==6.0.3[0m
+102.9s 853 [32m+[39m [1mqwix[0m[2m==0.1.8[0m
+102.9s 854 [32m+[39m [1mregex[0m[2m==2026.9.10[0m
+102.9s 855 [32m+[39m [1mrequests[0m[2m==2.34.2[0m
+102.9s 856 [32m+[39m [1mrequests-oauthlib[0m[2m==2.0.0[0m
+102.9s 857 [32m+[39m [1mresponses[0m[2m==0.18.0[0m
+102.9s 858 [32m+[39m [1mrich[0m[2m==15.0.0[0m
+102.9s 859 [32m+[39m [1msafetensors[0m[2m==0.8.0[0m
+102.9s 860 [32m+[39m [1mscipy[0m[2m==1.18.0[0m
+102.9s 861 [32m+[39m [1mscipy-stubs[0m[2m==1.18.0.1[0m
+102.9s 862 [32m+[39m [1msentencepiece[0m[2m==0.2.2[0m
+102.9s 863 [32m+[39m [1msetuptools[0m[2m==84.0.0[0m
+102.9s 864 [32m+[39m [1mshellingham[0m[2m==1.5.4[0m
+102.9s 865 [32m+[39m [1mshortuuid[0m[2m==1.0.13[0m
+102.9s 866 [32m+[39m [1msimplejson[0m[2m==4.1.2[0m
+102.9s 867 [32m+[39m [1msix[0m[2m==1.17.0[0m
+102.9s 868 [32m+[39m [1msniffio[0m[2m==1.3.1[0m
+102.9s 869 [32m+[39m [1msortedcontainers[0m[2m==2.4.0[0m
+102.9s 870 [32m+[39m [1mstarlette[0m[2m==1.6.0[0m
+102.9s 871 [32m+[39m [1msympy[0m[2m==1.12[0m
+102.9s 872 [32m+[39m [1mtabulate[0m[2m==0.10.0[0m
+102.9s 873 [32m+[39m [1mtenacity[0m[2m==9.1.4[0m
+102.9s 874 [32m+[39m [1mtensorboard-plugin-profile[0m[2m==2.13.0[0m
+102.9s 875 [32m+[39m [1mtensorboardx[0m[2m==2.6.5[0m
+102.9s 876 [32m+[39m [1mtensorstore[0m[2m==0.1.85[0m
+102.9s 877 [32m+[39m [1mtermcolor[0m[2m==3.3.0[0m
+102.9s 878 [32m+[39m [1mtiktoken[0m[2m==0.14.0[0m
+102.9s 879 [32m+[39m [1mtokamax[0m[2m==0.0.14[0m
+102.9s 880 [32m+[39m [1mtokenizers[0m[2m==0.23.2[0m
+102.9s 881 [32m+[39m [1mtoml[0m[2m==0.10.2[0m
+102.9s 882 [32m+[39m [1mtomlkit[0m[2m==0.15.1[0m
+102.9s 883 [32m+[39m [1mtoolz[0m[2m==1.1.0[0m
+102.9s 884 [32m+[39m [1mtqdm[0m[2m==4.70.1[0m
+102.9s 885 [32m+[39m [1mtransformers[0m[2m==5.17.0[0m
+102.9s 886 [32m+[39m [1mtreescope[0m[2m==0.1.10[0m
+102.9s 887 [32m+[39m [1mtypeguard[0m[2m==2.13.3[0m
+102.9s 888 [32m+[39m [1mtyper[0m[2m==0.27.2[0m
+102.9s 889 [32m+[39m [1mtyping-extensions[0m[2m==4.16.0[0m
+102.9s 890 [32m+[39m [1mtyping-inspection[0m[2m==0.4.4[0m
+102.9s 891 [32m+[39m [1muritemplate[0m[2m==4.2.0[0m
+102.9s 892 [32m+[39m [1murllib3[0m[2m==2.7.0[0m
+102.9s 893 [32m+[39m [1muvicorn[0m[2m==0.53.0[0m
+102.9s 894 [32m+[39m [1muvloop[0m[2m==0.22.1[0m
+102.9s 895 [32m+[39m [1mvirtualenv[0m[2m==21.9.0[0m
+102.9s 896 [32m+[39m [1mwadler-lindig[0m[2m==0.1.7[0m
+102.9s 897 [32m+[39m [1mwebsockets[0m[2m==16.1.1[0m
+102.9s 898 [32m+[39m [1mwerkzeug[0m[2m==3.1.8[0m
+102.9s 899 [32m+[39m [1mwheel[0m[2m==0.48.0[0m
+102.9s 900 [32m+[39m [1mxprof[0m[2m==2.23.1[0m
+102.9s 901 [32m+[39m [1mxxhash[0m[2m==4.0.1[0m
+102.9s 902 [32m+[39m [1myarl[0m[2m==1.25.1[0m
+102.9s 903 [32m+[39m [1mzipp[0m[2m==4.1.0[0m
+102.9s 904 [32m+[39m [1mzstandard[0m[2m==0.25.0[0m
+102.9s 905 [1m[33mwarning[39m[0m[1m:[0m [1mThe transitive dependency `etils` is unpinned. Consider setting a lower bound with a constraint when using `--resolution lowest` to avoid using outdated versions.[0m
+102.9s 906 [1m[33mwarning[39m[0m[1m:[0m [1mThe transitive dependency `google-cloud-aiplatform` is unpinned. Consider setting a lower bound with a constraint when using `--resolution lowest` to avoid using outdated versions.[0m
+102.9s 907 [2mUsing Python 3.12.16 environment at: loced-venv[0m
+102.9s 908 
+102.9s 909 [2mInstalled [1m234 packages[0m [2min 2.98s[0m[0m
+102.9s 910 [32m+[39m [1mabsl-py[0m[2m==2.5.0[0m
+102.9s 911 [32m+[39m [1maiofiles[0m[2m==25.1.0[0m
+102.9s 912 [32m+[39m [1maiohappyeyeballs[0m[2m==2.7.1[0m
+102.9s 913 [32m+[39m [1maiohttp[0m[2m==3.14.3[0m
+102.9s 914 [32m+[39m [1maiosignal[0m[2m==1.4.0[0m
+102.9s 915 [32m+[39m [1mannotated-doc[0m[2m==0.0.5[0m
+102.9s 916 [32m+[39m [1mannotated-types[0m[2m==0.8.0[0m
+102.9s 917 [32m+[39m [1mantlr4-python3-runtime[0m[2m==4.9.3[0m
+102.9s 918 [32m+[39m [1manyio[0m[2m==4.15.1[0m
+102.9s 919 [32m+[39m [1maqtp[0m[2m==0.9.0[0m
+102.9s 920 [32m+[39m [1marray-record[0m[2m==0.8.3[0m
+102.9s 921 [32m+[39m [1mastroid[0m[2m==4.0.4[0m
+102.9s 922 [32m+[39m [1mastunparse[0m[2m==1.6.3[0m
+102.9s 923 [32m+[39m [1mattrs[0m[2m==26.1.0[0m
+102.9s 924 [32m+[39m [1mauditwheel[0m[2m==6.8.1[0m
+102.9s 925 [32m+[39m [1mblack[0m[2m==26.5.1[0m
+102.9s 926 [32m+[39m [1mblobfile[0m[2m==3.3.0[0m
+102.9s 927 [32m+[39m [1mbuild[0m[2m==1.5.0[0m
+102.9s 928 [32m+[39m [1mcertifi[0m[2m==2026.7.22[0m
+102.9s 929 [32m+[39m [1mcffi[0m[2m==2.1.1[0m
+102.9s 930 [32m+[39m [1mcfgv[0m[2m==3.5.0[0m
+102.9s 931 [32m+[39m [1mcharset-normalizer[0m[2m==3.5.1[0m
+102.9s 932 [32m+[39m [1mcheroot[0m[2m==11.1.2[0m
+102.9s 933 [32m+[39m [1mchex[0m[2m==0.1.92[0m
+102.9s 934 [32m+[39m [1mclick[0m[2m==8.5.0[0m
+102.9s 935 [32m+[39m [1mcloud-accelerator-diagnostics[0m[2m==0.1.1[0m
+102.9s 936 [32m+[39m [1mcloudpickle[0m[2m==3.1.2[0m
+102.9s 937 [32m+[39m [1mcolorama[0m[2m==0.4.6[0m
+102.9s 938 [32m+[39m [1mcontourpy[0m[2m==1.3.3[0m
+102.9s 939 [32m+[39m [1mcoverage[0m[2m==7.16.1[0m
+102.9s 940 [32m+[39m [1mcryptography[0m[2m==50.0.1[0m
+102.9s 941 [32m+[39m [1mcycler[0m[2m==0.12.1[0m
+102.9s 942 [32m+[39m [1mdatasets[0m[2m==4.8.5[0m
+102.9s 943 [32m+[39m [1mdecorator[0m[2m==5.3.1[0m
+102.9s 944 [32m+[39m [1mdefusedxml[0m[2m==0.7.1[0m
+102.9s 945 [32m+[39m [1mdill[0m[2m==0.4.1[0m
+102.9s 946 [32m+[39m [1mdistlib[0m[2m==0.4.3[0m
+102.9s 947 [32m+[39m [1mdistro[0m[2m==1.9.0[0m
+102.9s 948 [32m+[39m [1mdocstring-parser[0m[2m==0.18.0[0m
+102.9s 949 [32m+[39m [1mdrjax[0m[2m==0.2.1[0m
+102.9s 950 [32m+[39m [1meinshape[0m[2m==1.0[0m
+102.9s 951 [32m+[39m [1metils[0m[2m==1.14.0[0m
+102.9s 952 [32m+[39m [1mevaluate[0m[2m==0.2.0[0m
+102.9s 953 [32m+[39m [1mexecnet[0m[2m==2.1.2[0m
+102.9s 954 [32m+[39m [1mfastapi[0m[2m==0.141.1[0m
+102.9s 955 [32m+[39m [1mfilelock[0m[2m==3.32.3[0m
+102.9s 956 [32m+[39m [1mfire[0m[2m==0.7.1[0m
+102.9s 957 [32m+[39m [1mflatbuffers[0m[2m==25.12.19[0m
+102.9s 958 [32m+[39m [1mflax[0m[2m==0.12.9[0m
+102.9s 959 [32m+[39m [1mfonttools[0m[2m==4.63.0[0m
+102.9s 960 [32m+[39m [1mfrozenlist[0m[2m==1.8.0[0m
+102.9s 961 [32m+[39m [1mfsspec[0m[2m==2026.2.0[0m
+102.9s 962 [32m+[39m [1mgast[0m[2m==0.7.0[0m
+102.9s 963 [32m+[39m [1mgcsfs[0m[2m==2026.2.0[0m
+102.9s 964 [32m+[39m [1mgoogle-api-core[0m[2m==2.38.0[0m
+102.9s 965 [32m+[39m [1mgoogle-api-python-client[0m[2m==2.200.0[0m
+102.9s 966 [32m+[39m [1mgoogle-auth[0m[2m==2.58.0[0m
+102.9s 967 [32m+[39m [1mgoogle-auth-httplib2[0m[2m==0.4.2[0m
+102.9s 968 [32m+[39m [1mgoogle-auth-oauthlib[0m[2m==1.4.1[0m
+102.9s 969 [32m+[39m [1mgoogle-cloud-aiplatform[0m[2m==2.1.3[0m
+102.9s 970 [32m+[39m [1mgoogle-cloud-appengine-logging[0m[2m==1.10.0[0m
+102.9s 971 [32m+[39m [1mgoogle-cloud-audit-log[0m[2m==0.6.2[0m
+102.9s 972 [32m+[39m [1mgoogle-cloud-bigquery[0m[2m==3.45.2[0m
+102.9s 973 [32m+[39m [1mgoogle-cloud-core[0m[2m==2.7.0[0m
+102.9s 974 [32m+[39m [1mgoogle-cloud-logging[0m[2m==3.16.3[0m
+102.9s 975 [32m+[39m [1mgoogle-cloud-mldiagnostics[0m[2m==1.0.8[0m
+102.9s 976 [32m+[39m [1mgoogle-cloud-monitoring[0m[2m==2.31.0[0m
+102.9s 977 [32m+[39m [1mgoogle-cloud-resource-manager[0m[2m==1.18.0[0m
+102.9s 978 [32m+[39m [1mgoogle-cloud-storage[0m[2m==3.14.1[0m
+102.9s 979 [32m+[39m [1mgoogle-cloud-storage-control[0m[2m==1.15.0[0m
+102.9s 980 [32m+[39m [1mgoogle-crc32c[0m[2m==1.8.0[0m
+102.9s 981 [32m+[39m [1mgoogle-genai[0m[2m==2.24.0[0m
+102.9s 982 [32m+[39m [1mgoogle-pasta[0m[2m==0.2.0[0m
+102.9s 983 [32m+[39m [1mgoogle-resumable-media[0m[2m==2.10.2[0m
+102.9s 984 [32m+[39m [1mgoogleapis-common-protos[0m[2m==1.75.3[0m
+102.9s 985 [32m+[39m [1mgrain[0m[2m==0.2.18[0m
+102.9s 986 [32m+[39m [1mgrpc-google-iam-v1[0m[2m==0.14.5[0m
+102.9s 987 [32m+[39m [1mgrpcio[0m[2m==1.83.0[0m
+102.9s 988 [32m+[39m [1mgrpcio-status[0m[2m==1.83.0[0m
+102.9s 989 [32m+[39m [1mgviz-api[0m[2m==1.10.0[0m
+102.9s 990 [32m+[39m [1mh11[0m[2m==0.16.0[0m
+102.9s 991 [32m+[39m [1mh5py[0m[2m==3.14.0[0m
+102.9s 992 [32m+[39m [1mhf-xet[0m[2m==1.6.0[0m
+102.9s 993 [32m+[39m [1mhttpcore[0m[2m==1.0.9[0m
+102.9s 994 [32m+[39m [1mhttplib2[0m[2m==0.32.0[0m
+102.9s 995 [32m+[39m [1mhttpx[0m[2m==0.28.1[0m
+102.9s 996 [32m+[39m [1mhuggingface-hub[0m[2m==1.32.0[0m
+102.9s 997 [32m+[39m [1mhumanize[0m[2m==4.16.0[0m
+102.9s 998 [32m+[39m [1mhypothesis[0m[2m==6.165.10[0m
+102.9s 999 [32m+[39m [1midentify[0m[2m==2.6.19[0m
+102.9s 1000 [32m+[39m [1midna[0m[2m==3.18[0m
+102.9s 1001 [32m+[39m [1mimmutabledict[0m[2m==4.3.1[0m
+102.9s 1002 [32m+[39m [1mimportlab[0m[2m==0.8.1[0m
+102.9s 1003 [32m+[39m [1miniconfig[0m[2m==2.3.0[0m
+102.9s 1004 [32m+[39m [1misort[0m[2m==9.0.1[0m
+102.9s 1005 [32m+[39m [1mjaraco-functools[0m[2m==4.6.0[0m
+102.9s 1006 [32m+[39m [1mjax[0m[2m==0.11.1[0m
+102.9s 1007 [32m+[39m [1mjaxlib[0m[2m==0.11.1[0m
+102.9s 1008 [32m+[39m [1mjaxtyping[0m[2m==0.3.11[0m
+102.9s 1009 [32m+[39m [1mjinja2[0m[2m==3.1.6[0m
+102.9s 1010 [32m+[39m [1mjoblib[0m[2m==1.6.0[0m
+102.9s 1011 [32m+[39m [1mjsonlines[0m[2m==4.0.0[0m
+102.9s 1012 [32m+[39m [1mkeras[0m[2m==3.15.1[0m
+102.9s 1013 [32m+[39m [1mkiwisolver[0m[2m==1.5.0[0m
+102.9s 1014 [32m+[39m [1mlatex2sympy2-extended[0m[2m==1.11.0[0m
+102.9s 1015 [32m+[39m [1mlibclang[0m[2m==18.1.1[0m
+102.9s 1016 [32m+[39m [1mlibcst[0m[2m==1.9.0[0m
+102.9s 1017 [32m+[39m [1mlibtpu[0m[2m==0.0.46[0m
+102.9s 1018 [32m+[39m [1mlxml[0m[2m==6.1.3[0m
+102.9s 1019 [32m+[39m [1mmarkdown[0m[2m==3.10.2[0m
+102.9s 1020 [32m+[39m [1mmarkdown-it-py[0m[2m==4.2.0[0m
+102.9s 1021 [32m+[39m [1mmarkupsafe[0m[2m==3.0.3[0m
+102.9s 1022 [32m+[39m [1mmath-verify[0m[2m==0.9.0[0m
+102.9s 1023 [32m+[39m [1mmatplotlib[0m[2m==3.11.1[0m
+102.9s 1024 [32m+[39m [1mmaxtext[0m[2m==0.2.5 (from file:///kaggle/working/maxtext-v0.2.5)[0m
+102.9s 1025 [32m+[39m [1mmccabe[0m[2m==0.7.0[0m
+102.9s 1026 [32m+[39m [1mmdurl[0m[2m==0.1.2[0m
+102.9s 1027 [32m+[39m [1mml-collections[0m[2m==1.1.0[0m
+102.9s 1028 [32m+[39m [1mml-dtypes[0m[2m==0.6.0[0m
+102.9s 1029 [32m+[39m [1mml-goodput-measurement[0m[2m==0.2.3[0m
+102.9s 1030 [32m+[39m [1mmore-itertools[0m[2m==11.1.0[0m
+102.9s 1031 [32m+[39m [1mmpmath[0m[2m==1.4.1[0m
+102.9s 1032 [32m+[39m [1mmsgpack[0m[2m==1.2.2[0m
+102.9s 1033 [32m+[39m [1mmsgspec[0m[2m==0.21.1[0m
+102.9s 1034 [32m+[39m [1mmultidict[0m[2m==6.9.1[0m
+102.9s 1035 [32m+[39m [1mmultiprocess[0m[2m==0.70.19[0m
+102.9s 1036 [32m+[39m [1mmypy-extensions[0m[2m==1.1.0[0m
+102.9s 1037 [32m+[39m [1mnamex[0m[2m==0.1.0[0m
+102.9s 1038 [32m+[39m [1mnetworkx[0m[2m==3.7[0m
+102.9s 1039 [32m+[39m [1mninja[0m[2m==1.13.2[0m
+102.9s 1040 [32m+[39m [1mnltk[0m[2m==3.10.3[0m
+102.9s 1041 [32m+[39m [1mnodeenv[0m[2m==1.10.0[0m
+102.9s 1042 [32m+[39m [1mnumpy[0m[2m==2.1.3[0m
+102.9s 1043 [32m+[39m [1mnumpy-typing-compat[0m[2m==20260602.2.1[0m
+102.9s 1044 [32m+[39m [1mnvidia-cuda-cccl[0m[2m==13.3.3.4.1[0m
+102.9s 1045 [32m+[39m [1mnvidia-ml-py[0m[2m==13.610.43[0m
+102.9s 1046 [32m+[39m [1moauthlib[0m[2m==3.3.1[0m
+102.9s 1047 [32m+[39m [1momegaconf[0m[2m==2.3.1[0m
+102.9s 1048 [32m+[39m [1mopentelemetry-api[0m[2m==1.44.0[0m
+102.9s 1049 [32m+[39m [1mopt-einsum[0m[2m==3.4.0[0m
+102.9s 1050 [32m+[39m [1moptax[0m[2m==0.2.8[0m
+102.9s 1051 [32m+[39m [1moptree[0m[2m==0.19.1[0m
+102.9s 1052 [32m+[39m [1moptype[0m[2m==0.18.0[0m
+102.9s 1053 [32m+[39m [1morbax-checkpoint[0m[2m==0.12.4[0m
+102.9s 1054 [32m+[39m [1mpackaging[0m[2m==26.3[0m
+102.9s 1055 [32m+[39m [1mpandas[0m[2m==3.0.6[0m
+102.9s 1056 [32m+[39m [1mparameterized[0m[2m==0.9.0[0m
+102.9s 1057 [32m+[39m [1mpathspec[0m[2m==1.1.1[0m
+102.9s 1058 [32m+[39m [1mpathwaysutils[0m[2m==0.1.11[0m
+102.9s 1059 [32m+[39m [1mpillow[0m[2m==12.3.0[0m
+102.9s 1060 [32m+[39m [1mplatformdirs[0m[2m==4.11.11[0m
+102.9s 1061 [32m+[39m [1mpluggy[0m[2m==1.6.0[0m
+102.9s 1062 [32m+[39m [1mportpicker[0m[2m==1.6.0[0m
+102.9s 1063 [32m+[39m [1mpre-commit[0m[2m==4.6.2[0m
+102.9s 1064 [32m+[39m [1mprometheus-client[0m[2m==0.26.0[0m
+102.9s 1065 [32m+[39m [1mpropcache[0m[2m==0.5.4[0m
+102.9s 1066 [32m+[39m [1mproto-plus[0m[2m==1.28.4[0m
+102.9s 1067 [32m+[39m [1mprotobuf[0m[2m==6.33.6[0m
+102.9s 1068 [32m+[39m [1mpsutil[0m[2m==7.2.2[0m
+102.9s 1069 [32m+[39m [1mpyarrow[0m[2m==25.0.1[0m
+102.9s 1070 [32m+[39m [1mpyasn1[0m[2m==0.6.4[0m
+102.9s 1071 [32m+[39m [1mpyasn1-modules[0m[2m==0.4.2[0m
+102.9s 1072 [32m+[39m [1mpycnite[0m[2m==2024.7.31[0m
+102.9s 1073 [32m+[39m [1mpycparser[0m[2m==3.0[0m
+102.9s 1074 [32m+[39m [1mpycryptodomex[0m[2m==3.23.0[0m
+102.9s 1075 [32m+[39m [1mpydantic[0m[2m==2.13.5[0m
+102.9s 1076 [32m+[39m [1mpydantic-core[0m[2m==2.46.5[0m
+102.9s 1077 [32m+[39m [1mpydot[0m[2m==4.0.1[0m
+102.9s 1078 [32m+[39m [1mpyelftools[0m[2m==0.33[0m
+102.9s 1079 [32m+[39m [1mpygments[0m[2m==2.21.0[0m
+102.9s 1080 [32m+[39m [1mpyink[0m[2m==26.5.1[0m
+102.9s 1081 [32m+[39m [1mpylint[0m[2m==4.0.8[0m
+102.9s 1082 [32m+[39m [1mpynvml[0m[2m==13.0.1[0m
+102.9s 1083 [32m+[39m [1mpyparsing[0m[2m==3.3.2[0m
+102.9s 1084 [32m+[39m [1mpyproject-hooks[0m[2m==1.2.0[0m
+102.9s 1085 [32m+[39m [1mpytest[0m[2m==9.1.1[0m
+102.9s 1086 [32m+[39m [1mpytest-xdist[0m[2m==3.8.0[0m
+102.9s 1087 [32m+[39m [1mpython-dateutil[0m[2m==2.9.0.post0[0m
+102.9s 1088 [32m+[39m [1mpython-discovery[0m[2m==1.6.1[0m
+102.9s 1089 [32m+[39m [1mpytokens[0m[2m==0.4.1[0m
+102.9s 1090 [32m+[39m [1mpytype[0m[2m==2024.10.11[0m
+102.9s 1091 [32m+[39m [1mpyyaml[0m[2m==6.0.3[0m
+102.9s 1092 [32m+[39m [1mqwix[0m[2m==0.1.8[0m
+102.9s 1093 [32m+[39m [1mregex[0m[2m==2026.9.10[0m
+102.9s 1094 [32m+[39m [1mrequests[0m[2m==2.34.2[0m
+102.9s 1095 [32m+[39m [1mrequests-oauthlib[0m[2m==2.0.0[0m
+102.9s 1096 [32m+[39m [1mresponses[0m[2m==0.18.0[0m
+102.9s 1097 [32m+[39m [1mrich[0m[2m==15.0.0[0m
+102.9s 1098 [32m+[39m [1msafetensors[0m[2m==0.8.0[0m
+102.9s 1099 [32m+[39m [1mscipy[0m[2m==1.18.0[0m
+102.9s 1100 [32m+[39m [1mscipy-stubs[0m[2m==1.18.0.1[0m
+102.9s 1101 [32m+[39m [1msentencepiece[0m[2m==0.2.2[0m
+102.9s 1102 [32m+[39m [1msetuptools[0m[2m==84.0.0[0m
+102.9s 1103 [32m+[39m [1mshellingham[0m[2m==1.5.4[0m
+102.9s 1104 [32m+[39m [1mshortuuid[0m[2m==1.0.13[0m
+102.9s 1105 [32m+[39m [1msimplejson[0m[2m==4.1.2[0m
+102.9s 1106 [32m+[39m [1msix[0m[2m==1.17.0[0m
+102.9s 1107 [32m+[39m [1msniffio[0m[2m==1.3.1[0m
+102.9s 1108 [32m+[39m [1msortedcontainers[0m[2m==2.4.0[0m
+102.9s 1109 [32m+[39m [1mstarlette[0m[2m==1.6.0[0m
+102.9s 1110 [32m+[39m [1msympy[0m[2m==1.12[0m
+102.9s 1111 [32m+[39m [1mtabulate[0m[2m==0.10.0[0m
+102.9s 1112 [32m+[39m [1mtenacity[0m[2m==9.1.4[0m
+102.9s 1113 [32m+[39m [1mtensorboard-plugin-profile[0m[2m==2.13.0[0m
+102.9s 1114 [32m+[39m [1mtensorboardx[0m[2m==2.6.5[0m
+102.9s 1115 [32m+[39m [1mtensorstore[0m[2m==0.1.85[0m
+102.9s 1116 [32m+[39m [1mtermcolor[0m[2m==3.3.0[0m
+102.9s 1117 [32m+[39m [1mtiktoken[0m[2m==0.14.0[0m
+102.9s 1118 [32m+[39m [1mtokamax[0m[2m==0.0.14[0m
+102.9s 1119 [32m+[39m [1mtokenizers[0m[2m==0.23.2[0m
+102.9s 1120 [32m+[39m [1mtoml[0m[2m==0.10.2[0m
+102.9s 1121 [32m+[39m [1mtomlkit[0m[2m==0.15.1[0m
+102.9s 1122 [32m+[39m [1mtoolz[0m[2m==1.1.0[0m
+102.9s 1123 [32m+[39m [1mtqdm[0m[2m==4.70.1[0m
+102.9s 1124 [32m+[39m [1mtransformers[0m[2m==5.17.0[0m
+102.9s 1125 [32m+[39m [1mtreescope[0m[2m==0.1.10[0m
+102.9s 1126 [32m+[39m [1mtypeguard[0m[2m==2.13.3[0m
+102.9s 1127 [32m+[39m [1mtyper[0m[2m==0.27.2[0m
+102.9s 1128 [32m+[39m [1mtyping-extensions[0m[2m==4.16.0[0m
+102.9s 1129 [32m+[39m [1mtyping-inspection[0m[2m==0.4.4[0m
+102.9s 1130 [32m+[39m [1muritemplate[0m[2m==4.2.0[0m
+102.9s 1131 [32m+[39m [1murllib3[0m[2m==2.7.0[0m
+102.9s 1132 [32m+[39m [1muvicorn[0m[2m==0.53.0[0m
+102.9s 1133 [32m+[39m [1muvloop[0m[2m==0.22.1[0m
+102.9s 1134 [32m+[39m [1mvirtualenv[0m[2m==21.9.0[0m
+102.9s 1135 [32m+[39m [1mwadler-lindig[0m[2m==0.1.7[0m
+102.9s 1136 [32m+[39m [1mwebsockets[0m[2m==16.1.1[0m
+102.9s 1137 [32m+[39m [1mwerkzeug[0m[2m==3.1.8[0m
+102.9s 1138 [32m+[39m [1mwheel[0m[2m==0.48.0[0m
+102.9s 1139 [32m+[39m [1mxprof[0m[2m==2.23.1[0m
+102.9s 1140 [32m+[39m [1mxxhash[0m[2m==4.0.1[0m
+102.9s 1141 [32m+[39m [1myarl[0m[2m==1.25.1[0m
+102.9s 1142 [32m+[39m [1mzipp[0m[2m==4.1.0[0m
+102.9s 1143 [32m+[39m [1mzstandard[0m[2m==0.25.0[0m
+102.9s 1144 [1m[33mwarning[39m[0m[1m:[0m [1mThe transitive dependency `etils` is unpinned. Consider setting a lower bound with a constraint when using `--resolution lowest` to avoid using outdated versions.[0m
+102.9s 1145 [1m[33mwarning[39m[0m[1m:[0m [1mThe transitive dependency `google-cloud-aiplatform` is unpinned. Consider setting a lower bound with a constraint when using `--resolution lowest` to avoid using outdated versions.[0m
+102.9s 1146 [2mUsing Python 3.12.16 environment at: loced-venv[0m
+130.1s 1147 [2mResolved [1m6 packages[0m [2min 27.32s[0m[0m
+130.1s 1148 [2mPrepared [1m1 package[0m [2min 19ms[0m[0m
+130.1s 1149 [2mInstalled [1m1 package[0m [2min 13ms[0m[0m
+130.1s 1150 [32m+[39m [1mpytest-timeout[0m[2m==2.4.0[0m
+130.1s 1151 [2mUsing Python 3.12.16 environment at: loced-venv[0m
+130.1s 1152 [2mChecked [1m236 packages[0m [2min 4ms[0m[0m
+130.1s 1153 [2mAll installed packages are compatible[0m
+130.2s 1154 dependency check:
+130.2s 1155 3.12.16 (main, Oct 28 2026, 04:34:44) [GCC 14.2.0]
+130.2s 1156 /kaggle/working/maxtext-v0.2.5/src/maxtext/__init__.py
+130.2s 1157 
+130.2s 1158 [2mResolved [1m6 packages[0m [2min 27.32s[0m[0m
+130.2s 1159 [2mPrepared [1m1 package[0m [2min 19ms[0m[0m
+130.2s 1160 [2mInstalled [1m1 package[0m [2min 13ms[0m[0m
+130.2s 1161 [32m+[39m [1mpytest-timeout[0m[2m==2.4.0[0m
+130.2s 1162 [2mUsing Python 3.12.16 environment at: loced-venv[0m
+130.2s 1163 [2mChecked [1m236 packages[0m [2min 4ms[0m[0m
+130.2s 1164 [2mAll installed packages are compatible[0m
+130.2s 1165 
+130.2s 1166 [2mResolved [1m6 packages[0m [2min 27.32s[0m[0m
+130.2s 1167 [2mPrepared [1m1 package[0m [2min 19ms[0m[0m
+130.2s 1168 [2mInstalled [1m1 package[0m [2min 13ms[0m[0m
+130.2s 1169 [32m+[39m [1mpytest-timeout[0m[2m==2.4.0[0m
+130.2s 1170 [2mUsing Python 3.12.16 environment at: loced-venv[0m
+130.2s 1171 [2mChecked [1m236 packages[0m [2min 4ms[0m[0m
+130.2s 1172 [2mAll installed packages are compatible[0m
+130.3s 1173 NVIDIA lib dirs: 0
+161.2s 1174 python  : 3.12.16
+161.2s 1175 jax     : 0.11.1
+161.2s 1176 maxtext : /kaggle/working/maxtext-v0.2.5/src/maxtext/__init__.py
+161.2s 1177 backend : tpu
+161.2s 1178 devices : [TpuDevice(id=0, process_index=0, coords=(0,0,0), core_on_chip=0), TpuDevice(id=1, process_index=0, coords=(1,0,0), core_on_chip=0), TpuDevice(id=2, process_index=0, coords=(0,1,0), core_on_chip=0), TpuDevice(id=3, process_index=0, coords=(1,1,0), core_on_chip=0), TpuDevice(id=4, process_index=0, coords=(0,2,0), core_on_chip=0), TpuDevice(id=5, process_index=0, coords=(1,2,0), core_on_chip=0), TpuDevice(id=6, process_index=0, coords=(0,3,0), core_on_chip=0), TpuDevice(id=7, process_index=0, coords=(1,3,0), core_on_chip=0)]
+161.2s 1179 TPU_0(process=0,(0,0,0,0)): TPU v5 lite bytes_limit=16909332480
+161.2s 1180 TPU_1(process=0,(1,0,0,0)): TPU v5 lite bytes_limit=16909332480
+161.2s 1181 TPU_2(process=0,(0,1,0,0)): TPU v5 lite bytes_limit=16909332480
+161.2s 1182 TPU_3(process=0,(1,1,0,0)): TPU v5 lite bytes_limit=16909332480
+161.2s 1183 TPU_4(process=0,(0,2,0,0)): TPU v5 lite bytes_limit=16909332480
+161.2s 1184 TPU_5(process=0,(1,2,0,0)): TPU v5 lite bytes_limit=16909332480
+161.2s 1185 TPU_6(process=0,(0,3,0,0)): TPU v5 lite bytes_limit=16909332480
+161.2s 1186 TPU_7(process=0,(1,3,0,0)): TPU v5 lite bytes_limit=16909332480
+161.2s 1187 real MaxText utilities: OK
+161.2s 1188 MagicNorm/mHC symbols: OK
+161.2s 1189 
+161.2s 1190 
+161.2s 1191 
+161.2s 1192 
+161.2s 1193 [stderr]
+161.2s 1194 /kaggle/working/loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+161.2s 1195 warnings.warn(
+161.2s 1196 WARNING: Logging before InitGoogle() is written to STDERR
+161.2s 1197 E0000 00:00:1793841415.538291     532 common_lib.cc:947] Could not set metric server port: INVALID_ARGUMENT: Could not find SliceBuilder port 8471 in any of the 0 ports provided in `tpu_process_addresses`="local"
+161.2s 1198 === Source Location Trace: ===
+161.2s 1199 learning/45eac/tfrc/runtime/common_lib.cc:239
+161.2s 1200 [transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+161.2s 1201 [transformers] DeepseekV32Config got `key=rope_scaling` in kwargs but hasn't set it as attribute. For RoPE standardization you need to set `self.rope_parameters` in model's config.
+161.2s 1202 [transformers] DeepseekV4Config got `key=rope_scaling` in kwargs but hasn't set it as attribute. For RoPE standardization you need to set `self.rope_parameters` in model's config.
+161.2s 1203 
+161.2s 1204 [sanity.py] exit=0 elapsed=30.9s
+317.2s 1205 [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                                          [100%][0m
+317.2s 1206 [33m=============================== warnings summary ===============================[0m
+317.2s 1207 loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90
+317.2s 1208 /kaggle/working/loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+317.2s 1209 warnings.warn(
+317.2s 1210 
+317.2s 1211 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+317.2s 1212 ============================= slowest 10 durations =============================
+317.2s 1213 17.73s call     loced/smoke_test.py::test_physical_layers
+317.2s 1214 17.15s call     loced/smoke_test.py::test_chunked_pass_b_matches_full
+317.2s 1215 13.99s call     loced/smoke_test.py::test_block_ids_cover_every_pool_entry
+317.2s 1216 11.69s call     loced/smoke_test.py::test_train_decreases
+317.2s 1217 8.88s call     loced/smoke_test.py::test_muon_jit_step
+317.2s 1218 8.16s call     loced/smoke_test.py::test_prefill_decode_store
+317.2s 1219 8.00s call     loced/smoke_test.py::test_train_decode_kl_report
+317.2s 1220 7.69s call     loced/smoke_test.py::test_generate
+317.2s 1221 5.21s call     loced/smoke_test.py::test_diagnostics_selection_metrics
+317.2s 1222 4.44s call     loced/smoke_test.py::test_decode_after_extend
+317.2s 1223 [33m[32m31 passed[0m, [33m[1m1 warning[0m[33m in 146.13s (0:02:26)[0m[0m
+317.2s 1224 
+317.2s 1225 reference_pytest exit=0 elapsed=156.0s
+317.2s 1226 reference tests: {'passed': 31, 'exit_code': 0, 'log': '/kaggle/working/reference_pytest.log'}
+439.9s 1227 [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                                                    [100%][0m
+439.9s 1228 [33m=============================== warnings summary ===============================[0m
+439.9s 1229 loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90
+439.9s 1230 /kaggle/working/loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+439.9s 1231 warnings.warn(
+439.9s 1232 
+439.9s 1233 loced-venv/lib/python3.12/site-packages/mpmath/ctx_mp.py:35
+439.9s 1234 /kaggle/working/loced-venv/lib/python3.12/site-packages/mpmath/ctx_mp.py:35: DeprecationWarning: mpnumeric is deprecated
+439.9s 1235 warnings.warn(f"{name} is deprecated", DeprecationWarning)
+439.9s 1236 
+439.9s 1237 loced-venv/lib/python3.12/site-packages/mpmath/rational.py:4
+439.9s 1238 loced-venv/lib/python3.12/site-packages/mpmath/rational.py:4
+439.9s 1239 loced-venv/lib/python3.12/site-packages/mpmath/rational.py:4
+439.9s 1240 /kaggle/working/loced-venv/lib/python3.12/site-packages/mpmath/rational.py:4: DeprecationWarning: the rational private module is deprecated
+439.9s 1241 warnings.warn("the rational private module is deprecated",
+439.9s 1242 
+439.9s 1243 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+439.9s 1244 ============================= slowest 10 durations =============================
+439.9s 1245 27.39s call     loced/maxtext/test_integration.py::test_trainer_resumes_from_checkpoint
+439.9s 1246 14.88s call     loced/maxtext/test_integration.py::test_gradients_are_bit_identical
+439.9s 1247 13.37s call     loced/maxtext/test_integration.py::test_orbax_checkpoint_roundtrip
+439.9s 1248 12.68s call     loced/maxtext/test_integration.py::test_maxtext_muon_one_training_step
+439.9s 1249 8.73s call     loced/maxtext/test_integration.py::test_forward_and_loss_are_bit_identical
+439.9s 1250 7.59s call     loced/maxtext/test_integration.py::test_prefill_and_decode_are_bit_identical
+439.9s 1251 2.34s setup    loced/maxtext/test_integration.py::test_nnx_parameter_inventory_matches_reference
+439.9s 1252 0.86s call     loced/maxtext/test_integration.py::test_trainer_rejects_non_maxtext_muon
+439.9s 1253 0.65s call     loced/maxtext/test_integration.py::test_shipped_500m_yaml_keeps_run_sequence_length[loced/maxtext/configs/loced_500m_t4x2.yml-128]
+439.9s 1254 0.40s call     loced/maxtext/test_integration.py::test_shipped_yaml_initializes_with_custom_config_class
+439.9s 1255 [33m[32m21 passed[0m, [33m[1m5 warnings[0m[33m in 112.34s (0:01:52)[0m[0m
+439.9s 1256 
+439.9s 1257 maxtext_pytest exit=0 elapsed=122.6s
+439.9s 1258 MaxText tests: {'passed': 21, 'exit_code': 0, 'parity_tolerance': 1e-05, 'log': '/kaggle/working/maxtext_pytest.log'}
+610.0s 1259 
+610.0s 1260 === baseline ===
+610.0s 1261 {
+610.0s 1262 "params": 549456,
+610.0s 1263 "param_maxdiff": 0.0,
+610.0s 1264 "loss_maxdiff": 0.0,
+610.0s 1265 "logits_maxdiff": 0.0,
+610.0s 1266 "grad_maxdiff": 0.0,
+610.0s 1267 "prefill_logits_maxdiff": 0.0,
+610.0s 1268 "prefill_store_maxdiff": 0.0,
+610.0s 1269 "decode_logits_maxdiff": 0.0,
+610.0s 1270 "sinkhorn_max_error": null,
+610.0s 1271 "stream_ptp": null
+610.0s 1272 }
+610.0s 1273 
+610.0s 1274 === magic_norm ===
+610.0s 1275 {
+610.0s 1276 "params": 549712,
+610.0s 1277 "param_maxdiff": 0.0,
+610.0s 1278 "loss_maxdiff": 0.0,
+610.0s 1279 "logits_maxdiff": 0.0,
+610.0s 1280 "grad_maxdiff": 0.0,
+610.0s 1281 "prefill_logits_maxdiff": 0.0,
+610.0s 1282 "prefill_store_maxdiff": 0.0,
+610.0s 1283 "decode_logits_maxdiff": 0.0,
+610.0s 1284 "sinkhorn_max_error": null,
+610.0s 1285 "stream_ptp": null
+610.0s 1286 }
+610.0s 1287 
+610.0s 1288 === mhc_static_magic ===
+610.0s 1289 {
+610.0s 1290 "params": 549904,
+610.0s 1291 "param_maxdiff": 0.0,
+610.0s 1292 "loss_maxdiff": 0.0,
+610.0s 1293 "logits_maxdiff": 0.0,
+610.0s 1294 "grad_maxdiff": 0.0,
+610.0s 1295 "prefill_logits_maxdiff": 0.0,
+610.0s 1296 "prefill_store_maxdiff": 0.0,
+610.0s 1297 "decode_logits_maxdiff": 0.0,
+610.0s 1298 "sinkhorn_max_error": 9.5367431640625e-07,
+610.0s 1299 "stream_ptp": 0.0012540137395262718
+610.0s 1300 }
+610.0s 1301 
+610.0s 1302 === mhc_dynamic_magic ===
+610.0s 1303 {
+610.0s 1304 "params": 562192,
+610.0s 1305 "param_maxdiff": 0.0,
+610.0s 1306 "loss_maxdiff": 0.0,
+610.0s 1307 "logits_maxdiff": 0.0,
+610.0s 1308 "grad_maxdiff": 0.0,
+610.0s 1309 "prefill_logits_maxdiff": 0.0,
+610.0s 1310 "prefill_store_maxdiff": 0.0,
+610.0s 1311 "decode_logits_maxdiff": 0.0,
+610.0s 1312 "sinkhorn_max_error": 9.5367431640625e-07,
+610.0s 1313 "stream_ptp": 0.0012540137395262718
+610.0s 1314 }
+610.0s 1315 
+610.0s 1316 parity report written
+610.0s 1317 
+610.0s 1318 [stderr]
+610.0s 1319 /kaggle/working/loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+610.0s 1320 warnings.warn(
+610.0s 1321 WARNING: Logging before InitGoogle() is written to STDERR
+610.0s 1322 E0000 00:00:1793841724.491210   22578 common_lib.cc:947] Could not set metric server port: INVALID_ARGUMENT: Could not find SliceBuilder port 8471 in any of the 0 ports provided in `tpu_process_addresses`="local"
+610.0s 1323 === Source Location Trace: ===
+610.0s 1324 learning/45eac/tfrc/runtime/common_lib.cc:239
+610.0s 1325 
+610.0s 1326 [arch_parity.py] exit=0 elapsed=170.1s
+662.0s 1327 params : 562,192 expected 562,192
+662.0s 1328 losses : [4.734381675720215, 4.5849456787109375]
+662.0s 1329 step   : 2
+662.0s 1330 time   : 8688.4 ms/step (compile included)
+662.0s 1331 mhc_res    (8, 4, 4) NamedSharding(mesh=Mesh('diloco': 1, 'data': 8, 'stage': 1, 'fsdp': 1, 'fsdp_transpose': 1, 'context': 1, 'context_usp_ulysses': 1, 'context_autoregressive': 1, 'tensor': 1, 'tensor_sequence': 1, 'expert': 1, 'autoregressive': 1, axis_types=(Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto)), spec=P(), memory_kind=device)
+662.0s 1332 mhc_pre    (8, 4) NamedSharding(mesh=Mesh('diloco': 1, 'data': 8, 'stage': 1, 'fsdp': 1, 'fsdp_transpose': 1, 'context': 1, 'context_usp_ulysses': 1, 'context_autoregressive': 1, 'tensor': 1, 'tensor_sequence': 1, 'expert': 1, 'autoregressive': 1, axis_types=(Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto)), spec=P(None, None), memory_kind=device)
+662.0s 1333 mhc_post   (8, 4) NamedSharding(mesh=Mesh('diloco': 1, 'data': 8, 'stage': 1, 'fsdp': 1, 'fsdp_transpose': 1, 'context': 1, 'context_usp_ulysses': 1, 'context_autoregressive': 1, 'tensor': 1, 'tensor_sequence': 1, 'expert': 1, 'autoregressive': 1, axis_types=(Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto)), spec=P(None, None), memory_kind=device)
+662.0s 1334 mhc_dyn    (8, 64, 24) NamedSharding(mesh=Mesh('diloco': 1, 'data': 8, 'stage': 1, 'fsdp': 1, 'fsdp_transpose': 1, 'context': 1, 'context_usp_ulysses': 1, 'context_autoregressive': 1, 'tensor': 1, 'tensor_sequence': 1, 'expert': 1, 'autoregressive': 1, axis_types=(Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto)), spec=P(), memory_kind=device)
+662.0s 1335 
+662.0s 1336 [stderr]
+662.0s 1337 /kaggle/working/loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+662.0s 1338 warnings.warn(
+662.0s 1339 [transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+662.0s 1340 [transformers] DeepseekV32Config got `key=rope_scaling` in kwargs but hasn't set it as attribute. For RoPE standardization you need to set `self.rope_parameters` in model's config.
+662.0s 1341 [transformers] DeepseekV4Config got `key=rope_scaling` in kwargs but hasn't set it as attribute. For RoPE standardization you need to set `self.rope_parameters` in model's config.
+662.0s 1342 WARNING: Logging before InitGoogle() is written to STDERR
+662.0s 1343 E0000 00:00:1793841900.937565   41670 common_lib.cc:947] Could not set metric server port: INVALID_ARGUMENT: Could not find SliceBuilder port 8471 in any of the 0 ports provided in `tpu_process_addresses`="local"
+662.0s 1344 === Source Location Trace: ===
+662.0s 1345 learning/45eac/tfrc/runtime/common_lib.cc:239
+662.0s 1346 WARNING:absl:base_output_directory is not provided; Using local directory called maxtext_output
+662.0s 1347 WARNING:absl:tokenizer_path not found in HF_IDS in maxtext/src/maxtext/utils/globals.py.           Using the default src/maxtext/assets/tokenizers/tokenizer.llama2 instead.           Please pass tokenizer_path in your command if this is not intended.
+662.0s 1348 
+662.0s 1349 [mhc_train.py] exit=0 elapsed=52.0s
+731.8s 1350 {
+731.8s 1351 "label": "baseline",
+731.8s 1352 "params": 549456,
+731.8s 1353 "batch": 4,
+731.8s 1354 "seq_len": 64,
+731.8s 1355 "warmup_steps": 2,
+731.8s 1356 "timed_steps": 10,
+731.8s 1357 "loss_first": 4.6528520584106445,
+731.8s 1358 "loss_last": 4.3155012130737305,
+731.8s 1359 "ms_per_step": 12.560662200007755,
+731.8s 1360 "tokens_per_sec": 20381.091054247277,
+731.8s 1361 "peak_bytes_in_use": 47919616,
+731.8s 1362 "bytes_limit": 16909332480,
+731.8s 1363 "magic_norm": false,
+731.8s 1364 "mhc_streams": 1,
+731.8s 1365 "mhc_dynamic": false
+731.8s 1366 }
+731.8s 1367 {
+731.8s 1368 "label": "magic_mhc_dynamic",
+731.8s 1369 "params": 562192,
+731.8s 1370 "batch": 4,
+731.8s 1371 "seq_len": 64,
+731.8s 1372 "warmup_steps": 2,
+731.8s 1373 "timed_steps": 10,
+731.8s 1374 "loss_first": 4.63718318939209,
+731.8s 1375 "loss_last": 4.297788143157959,
+731.8s 1376 "ms_per_step": 14.38581139998405,
+731.8s 1377 "tokens_per_sec": 17795.311844577904,
+731.8s 1378 "peak_bytes_in_use": 60344832,
+731.8s 1379 "bytes_limit": 16909332480,
+731.8s 1380 "magic_norm": true,
+731.8s 1381 "mhc_streams": 4,
+731.8s 1382 "mhc_dynamic": true
+731.8s 1383 }
+731.8s 1384 {
+731.8s 1385 "baseline": {
+731.8s 1386 "label": "baseline",
+731.8s 1387 "params": 549456,
+731.8s 1388 "batch": 4,
+731.8s 1389 "seq_len": 64,
+731.8s 1390 "warmup_steps": 2,
+731.8s 1391 "timed_steps": 10,
+731.8s 1392 "loss_first": 4.6528520584106445,
+731.8s 1393 "loss_last": 4.3155012130737305,
+731.8s 1394 "ms_per_step": 12.560662200007755,
+731.8s 1395 "tokens_per_sec": 20381.091054247277,
+731.8s 1396 "peak_bytes_in_use": 47919616,
+731.8s 1397 "bytes_limit": 16909332480,
+731.8s 1398 "magic_norm": false,
+731.8s 1399 "mhc_streams": 1,
+731.8s 1400 "mhc_dynamic": false
+731.8s 1401 },
+731.8s 1402 "magic_mhc_dynamic": {
+731.8s 1403 "label": "magic_mhc_dynamic",
+731.8s 1404 "params": 562192,
+731.8s 1405 "batch": 4,
+731.8s 1406 "seq_len": 64,
+731.8s 1407 "warmup_steps": 2,
+731.8s 1408 "timed_steps": 10,
+731.8s 1409 "loss_first": 4.63718318939209,
+731.8s 1410 "loss_last": 4.297788143157959,
+731.8s 1411 "ms_per_step": 14.38581139998405,
+731.8s 1412 "tokens_per_sec": 17795.311844577904,
+731.8s 1413 "peak_bytes_in_use": 60344832,
+731.8s 1414 "bytes_limit": 16909332480,
+731.8s 1415 "magic_norm": true,
+731.8s 1416 "mhc_streams": 4,
+731.8s 1417 "mhc_dynamic": true
+731.8s 1418 },
+731.8s 1419 "baseline_over_mhc_speed": 0.873128518841953,
+731.8s 1420 "mhc_over_baseline_params": 1.0231792900614425
+731.8s 1421 }
+731.8s 1422 
+731.8s 1423 [stderr]
+731.8s 1424 /kaggle/working/loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+731.8s 1425 warnings.warn(
+731.8s 1426 [transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+731.8s 1427 [transformers] DeepseekV32Config got `key=rope_scaling` in kwargs but hasn't set it as attribute. For RoPE standardization you need to set `self.rope_parameters` in model's config.
+731.8s 1428 [transformers] DeepseekV4Config got `key=rope_scaling` in kwargs but hasn't set it as attribute. For RoPE standardization you need to set `self.rope_parameters` in model's config.
+731.8s 1429 WARNING: Logging before InitGoogle() is written to STDERR
+731.8s 1430 E0000 00:00:1793841952.644287   43391 common_lib.cc:947] Could not set metric server port: INVALID_ARGUMENT: Could not find SliceBuilder port 8471 in any of the 0 ports provided in `tpu_process_addresses`="local"
+731.8s 1431 === Source Location Trace: ===
+731.8s 1432 learning/45eac/tfrc/runtime/common_lib.cc:239
+731.8s 1433 WARNING:absl:base_output_directory is not provided; Using local directory called maxtext_output
+731.8s 1434 WARNING:absl:tokenizer_path not found in HF_IDS in maxtext/src/maxtext/utils/globals.py.           Using the default src/maxtext/assets/tokenizers/tokenizer.llama2 instead.           Please pass tokenizer_path in your command if this is not intended.
+731.8s 1435 WARNING:absl:base_output_directory is not provided; Using local directory called maxtext_output
+731.8s 1436 WARNING:absl:tokenizer_path not found in HF_IDS in maxtext/src/maxtext/utils/globals.py.           Using the default src/maxtext/assets/tokenizers/tokenizer.llama2 instead.           Please pass tokenizer_path in your command if this is not intended.
+731.8s 1437 
+731.8s 1438 [benchmark.py] exit=0 elapsed=69.8s
+735.6s 1439 /usr/local/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:88: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+735.6s 1440 warnings.warn(
+735.6s 1441 
+735.6s 1442 /usr/local/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:88: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+735.6s 1443 warnings.warn(
+740.7s 1444 WARNING: Logging before InitGoogle() is written to STDERR
+740.7s 1445 E0000 00:00:1793842020.343239      73 common_lib.cc:648] Could not set metric server port: INVALID_ARGUMENT: Could not find SliceBuilder port 8471 in any of the 0 ports provided in `tpu_process_addresses`="local"
+740.7s 1446 === Source Location Trace: ===
+740.7s 1447 learning/45eac/tfrc/runtime/common_lib.cc:238
+741.1s 1448 WARNING: Logging before InitGoogle() is written to STDERR
+741.1s 1449 E0000 00:00:1793842020.343239      73 common_lib.cc:648] Could not set metric server port: INVALID_ARGUMENT: Could not find SliceBuilder port 8471 in any of the 0 ports provided in `tpu_process_addresses`="local"
+741.1s 1450 === Source Location Trace: ===
+741.1s 1451 learning/45eac/tfrc/runtime/common_lib.cc:238
+741.1s 1452 
+741.1s 1453 WARNING: Logging before InitGoogle() is written to STDERR
+741.1s 1454 E0000 00:00:1793842020.343239      73 common_lib.cc:648] Could not set metric server port: INVALID_ARGUMENT: Could not find SliceBuilder port 8471 in any of the 0 ports provided in `tpu_process_addresses`="local"
+741.1s 1455 === Source Location Trace: ===
+741.1s 1456 learning/45eac/tfrc/runtime/common_lib.cc:238
+752.3s 1457 {
+752.3s 1458 "accelerator": "tpu",
+752.3s 1459 "backend": "tpu",
+752.3s 1460 "devices": 8,
+752.3s 1461 "reference_tests": {
+752.3s 1462 "passed": 31,
+752.3s 1463 "exit_code": 0,
+752.3s 1464 "log": "/kaggle/working/reference_pytest.log"
+752.3s 1465 },
+752.3s 1466 "maxtext_tests": {
+752.3s 1467 "passed": 21,
+752.3s 1468 "exit_code": 0,
+752.3s 1469 "parity_tolerance": 1e-05,
+752.3s 1470 "log": "/kaggle/working/maxtext_pytest.log"
+752.3s 1471 },
+752.3s 1472 "parity_tolerance": 1e-05,
+752.3s 1473 "parity": {
+752.3s 1474 "baseline": {
+752.3s 1475 "params": 549456,
+752.3s 1476 "param_maxdiff": 0.0,
+752.3s 1477 "loss_maxdiff": 0.0,
+752.3s 1478 "logits_maxdiff": 0.0,
+752.3s 1479 "grad_maxdiff": 0.0,
+752.3s 1480 "prefill_logits_maxdiff": 0.0,
+752.3s 1481 "prefill_store_maxdiff": 0.0,
+752.3s 1482 "decode_logits_maxdiff": 0.0,
+752.3s 1483 "sinkhorn_max_error": null,
+752.3s 1484 "stream_ptp": null
+752.3s 1485 },
+752.3s 1486 "magic_norm": {
+752.3s 1487 "params": 549712,
+752.3s 1488 "param_maxdiff": 0.0,
+752.3s 1489 "loss_maxdiff": 0.0,
+752.3s 1490 "logits_maxdiff": 0.0,
+752.3s 1491 "grad_maxdiff": 0.0,
+752.3s 1492 "prefill_logits_maxdiff": 0.0,
+752.3s 1493 "prefill_store_maxdiff": 0.0,
+752.3s 1494 "decode_logits_maxdiff": 0.0,
+752.3s 1495 "sinkhorn_max_error": null,
+752.3s 1496 "stream_ptp": null
+752.3s 1497 },
+752.3s 1498 "mhc_static_magic": {
+752.3s 1499 "params": 549904,
+752.3s 1500 "param_maxdiff": 0.0,
+752.3s 1501 "loss_maxdiff": 0.0,
+752.3s 1502 "logits_maxdiff": 0.0,
+752.3s 1503 "grad_maxdiff": 0.0,
+752.3s 1504 "prefill_logits_maxdiff": 0.0,
+752.3s 1505 "prefill_store_maxdiff": 0.0,
+752.3s 1506 "decode_logits_maxdiff": 0.0,
+752.3s 1507 "sinkhorn_max_error": 9.5367431640625e-07,
+752.3s 1508 "stream_ptp": 0.0012540137395262718
+752.3s 1509 },
+752.3s 1510 "mhc_dynamic_magic": {
+752.3s 1511 "params": 562192,
+752.3s 1512 "param_maxdiff": 0.0,
+752.3s 1513 "loss_maxdiff": 0.0,
+752.3s 1514 "logits_maxdiff": 0.0,
+752.3s 1515 "grad_maxdiff": 0.0,
+752.3s 1516 "prefill_logits_maxdiff": 0.0,
+752.3s 1517 "prefill_store_maxdiff": 0.0,
+752.3s 1518 "decode_logits_maxdiff": 0.0,
+752.3s 1519 "sinkhorn_max_error": 9.5367431640625e-07,
+752.3s 1520 "stream_ptp": 0.0012540137395262718
+752.3s 1521 }
+752.3s 1522 },
+752.3s 1523 "maxtext_mhc_train": {
+752.3s 1524 "params": 562192,
+752.3s 1525 "expected_params": 562192,
+752.3s 1526 "losses": [
+752.3s 1527 4.734381675720215,
+752.3s 1528 4.5849456787109375
+752.3s 1529 ],
+752.3s 1530 "optimizer_step": 2,
+752.3s 1531 "magic_norm": true,
+752.3s 1532 "mhc_streams": 4,
+752.3s 1533 "mhc_dynamic": true,
+752.3s 1534 "ms_per_step_compile_included": 8688.413489000028
+752.3s 1535 },
+752.3s 1536 "benchmark": {
+752.3s 1537 "baseline": {
+752.3s 1538 "label": "baseline",
+752.3s 1539 "params": 549456,
+752.3s 1540 "batch": 4,
+752.3s 1541 "seq_len": 64,
+752.3s 1542 "warmup_steps": 2,
+752.3s 1543 "timed_steps": 10,
+752.3s 1544 "loss_first": 4.6528520584106445,
+752.3s 1545 "loss_last": 4.3155012130737305,
+752.3s 1546 "ms_per_step": 12.560662200007755,
+752.3s 1547 "tokens_per_sec": 20381.091054247277,
+752.3s 1548 "peak_bytes_in_use": 47919616,
+752.3s 1549 "bytes_limit": 16909332480,
+752.3s 1550 "magic_norm": false,
+752.3s 1551 "mhc_streams": 1,
+752.3s 1552 "mhc_dynamic": false
+752.3s 1553 },
+752.3s 1554 "magic_mhc_dynamic": {
+752.3s 1555 "label": "magic_mhc_dynamic",
+752.3s 1556 "params": 562192,
+752.3s 1557 "batch": 4,
+752.3s 1558 "seq_len": 64,
+752.3s 1559 "warmup_steps": 2,
+752.3s 1560 "timed_steps": 10,
+752.3s 1561 "loss_first": 4.63718318939209,
+752.3s 1562 "loss_last": 4.297788143157959,
+752.3s 1563 "ms_per_step": 14.38581139998405,
+752.3s 1564 "tokens_per_sec": 17795.311844577904,
+752.3s 1565 "peak_bytes_in_use": 60344832,
+752.3s 1566 "bytes_limit": 16909332480,
+752.3s 1567 "magic_norm": true,
+752.3s 1568 "mhc_streams": 4,
+752.3s 1569 "mhc_dynamic": true
+752.3s 1570 },
+752.3s 1571 "baseline_over_mhc_speed": 0.873128518841953,
+752.3s 1572 "mhc_over_baseline_params": 1.0231792900614425
+752.3s 1573 }
+752.3s 1574 }
+752.3s 1575 
+752.3s 1576 Wrote /kaggle/working/loced_architecture_report.json
+752.3s 1577 MagicNorm + mHC validation: ALL CHECKS PASSED
+765.8s 1578 [NbConvertApp] Converting notebook __notebook__.ipynb to notebook
+765.8s 1579 [NbConvertApp] Writing 159035 bytes to __notebook__.ipynb
+768.2s 1580 [NbConvertApp] Converting notebook __notebook__.ipynb to html
+769.3s 1581 [NbConvertApp] Writing 490145 bytes to __results__.html

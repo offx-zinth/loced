@@ -1,0 +1,21 @@
+.....................                                                    [100%]
+=============================== warnings summary ===============================
+loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90
+  /content/loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+15.41s call     loced/maxtext/test_integration.py::test_trainer_resumes_from_checkpoint
+14.97s call     loced/maxtext/test_integration.py::test_gradients_are_bit_identical
+12.74s call     loced/maxtext/test_integration.py::test_orbax_checkpoint_roundtrip
+8.54s call     loced/maxtext/test_integration.py::test_forward_and_loss_are_bit_identical
+6.99s call     loced/maxtext/test_integration.py::test_prefill_and_decode_are_bit_identical
+3.14s call     loced/maxtext/test_integration.py::test_maxtext_muon_one_training_step
+2.24s setup    loced/maxtext/test_integration.py::test_nnx_parameter_inventory_matches_reference
+1.19s call     loced/maxtext/test_integration.py::test_trainer_rejects_non_maxtext_muon
+0.63s call     loced/maxtext/test_integration.py::test_shipped_500m_yaml_keeps_run_sequence_length[loced/maxtext/configs/loced_500m_t4x2.yml-128]
+0.34s call     loced/maxtext/test_integration.py::test_shipped_yaml_initializes_with_custom_config_class
+21 passed, 1 warning in 80.36s (0:01:20)
+
+[stderr]

@@ -1,0 +1,56 @@
+{
+  "tolerance": 1e-05,
+  "reuse_p": 0.5,
+  "backend": "tpu",
+  "devices": 1,
+  "configs": {
+    "baseline": {
+      "params": 549456,
+      "param_maxdiff": 0.0,
+      "loss_maxdiff": 0.0,
+      "logits_maxdiff": 0.0,
+      "grad_maxdiff": 0.0,
+      "prefill_logits_maxdiff": 0.0,
+      "prefill_store_maxdiff": 0.0,
+      "decode_logits_maxdiff": 0.0,
+      "sinkhorn_max_error": null,
+      "stream_ptp": null
+    },
+    "magic_norm": {
+      "params": 549712,
+      "param_maxdiff": 0.0,
+      "loss_maxdiff": 0.0,
+      "logits_maxdiff": 0.0,
+      "grad_maxdiff": 0.0,
+      "prefill_logits_maxdiff": 0.0,
+      "prefill_store_maxdiff": 0.0,
+      "decode_logits_maxdiff": 0.0,
+      "sinkhorn_max_error": null,
+      "stream_ptp": null
+    },
+    "mhc_static_magic": {
+      "params": 549904,
+      "param_maxdiff": 0.0,
+      "loss_maxdiff": 0.0,
+      "logits_maxdiff": 0.0,
+      "grad_maxdiff": 0.0,
+      "prefill_logits_maxdiff": 0.0,
+      "prefill_store_maxdiff": 0.0,
+      "decode_logits_maxdiff": 0.0,
+      "sinkhorn_max_error": 9.5367431640625e-07,
+      "stream_ptp": 0.0012540137395262718
+    },
+    "mhc_dynamic_magic": {
+      "params": 562192,
+      "param_maxdiff": 0.0,
+      "loss_maxdiff": 0.0,
+      "logits_maxdiff": 0.0,
+      "grad_maxdiff": 0.0,
+      "prefill_logits_maxdiff": 0.0,
+      "prefill_store_maxdiff": 0.0,
+      "decode_logits_maxdiff": 0.0,
+      "sinkhorn_max_error": 9.5367431640625e-07,
+      "stream_ptp": 0.0012540137395262718
+    }
+  }
+}

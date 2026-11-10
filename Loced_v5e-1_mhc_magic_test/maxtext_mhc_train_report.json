@@ -1,0 +1,13 @@
+{
+  "params": 562192,
+  "expected_params": 562192,
+  "losses": [
+    4.734381675720215,
+    4.5849456787109375
+  ],
+  "optimizer_step": 2,
+  "magic_norm": true,
+  "mhc_streams": 4,
+  "mhc_dynamic": true,
+  "ms_per_step_compile_included": 10265.735736000352
+}

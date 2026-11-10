@@ -1,0 +1,6 @@
+{
+  "passed": 21,
+  "exit_code": 0,
+  "parity_tolerance": 1e-05,
+  "log": "/content/maxtext_pytest.log"
+}

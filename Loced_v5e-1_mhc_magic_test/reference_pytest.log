@@ -1,0 +1,21 @@
+...............................                                          [100%]
+=============================== warnings summary ===============================
+loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90
+  /content/loced-venv/lib/python3.12/site-packages/jax/_src/cloud_tpu_init.py:90: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+17.14s call     loced/smoke_test.py::test_physical_layers
+16.71s call     loced/smoke_test.py::test_chunked_pass_b_matches_full
+15.24s call     loced/smoke_test.py::test_train_decreases
+13.05s call     loced/smoke_test.py::test_block_ids_cover_every_pool_entry
+11.51s call     loced/smoke_test.py::test_muon_jit_step
+7.92s call     loced/smoke_test.py::test_train_decode_kl_report
+7.81s call     loced/smoke_test.py::test_prefill_decode_store
+7.38s call     loced/smoke_test.py::test_generate
+5.15s call     loced/smoke_test.py::test_diagnostics_selection_metrics
+4.15s call     loced/smoke_test.py::test_decode_after_extend
+31 passed, 1 warning in 140.50s (0:02:20)
+
+[stderr]
