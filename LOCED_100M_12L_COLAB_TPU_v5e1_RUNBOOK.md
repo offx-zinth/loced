@@ -69,8 +69,36 @@ The single training script does five things, in order:
    reports next-token accuracy, then greedily generates 16 tokens.
 
 It writes `loced_100m_body_12l_mhc_gpt2_synth_report.json` plus
-`loced_summary/` (report, loss history, `summary.txt`) into `/content`, so
-they sit next to the notebook and are easy to download.
+`loced_summary/` (report, loss history, `summary.txt`, `loss.png`) into
+`/content`, so they sit next to the notebook and are easy to download.
+
+The loss plot is built on the Agg canvas directly rather than through
+`pyplot`, because Kaggle and Colab pre-register the `matplotlib_inline`
+backend, which `matplotlib.use()` cannot switch away from.
+
+---
+
+## Verified results
+
+The same script has already passed on Kaggle TPU v5e-8 (8 chips) and Kaggle
+GPU T4×2. Evidence: `validation/kaggle_100m_12l_mhc_gpt2_2026-11-11/`.
+
+| | TPU v5e-8 | GPU T4×2 |
+|---|---:|---:|
+| Body params | 99,749,744 | 99,749,744 |
+| Full model | 125,481,328 | 125,481,328 |
+| Active body / token | 5,304,176 (5.32%) | 5,304,176 (5.32%) |
+| Dense↔sparse parity (value / grad) | 1.9e-09 / 3.0e-08 | 3.7e-09 / 1.5e-07 |
+| Mesh gradient check (relative) | 1.3e-03 | 3.4e-07 |
+| Selection budget | 64 of 96 candidates | 64 of 96 candidates |
+| Loss (20 steps) | 12.11 → 3.92 | 12.11 → 4.49 |
+| Next-token accuracy | 0.890 | 0.890 |
+| Greedy rule accuracy | 1.000 | 1.000 |
+| ms/step | 42.5 | 374.7 |
+
+The TPU mesh-gradient figure (`1.3e-03`) is float32 accumulation across
+8 chips, not a logic error — the 2-chip GPU run is at `3.4e-07`. The script
+warns above `1e-4` and fails hard above `1e-2`.
 
 ---
 
