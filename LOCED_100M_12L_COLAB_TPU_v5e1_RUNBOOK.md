@@ -72,9 +72,16 @@ It writes `loced_100m_body_12l_mhc_gpt2_synth_report.json` plus
 `loced_summary/` (report, loss history, `summary.txt`, `loss.png`) into
 `/content`, so they sit next to the notebook and are easy to download.
 
-The loss plot is built on the Agg canvas directly rather than through
-`pyplot`, because Kaggle and Colab pre-register the `matplotlib_inline`
-backend, which `matplotlib.use()` cannot switch away from.
+The loss plot is written on the Agg canvas directly, and `MPLBACKEND` is
+overridden to `Agg` before matplotlib is imported. This matters because
+Kaggle and Colab export `MPLBACKEND=module://matplotlib_inline.backend_inline`
+to the notebook process, and the training subprocess inherits it — but the
+isolated venv has no `matplotlib_inline` installed, so a plain
+`import matplotlib` there fails with
+`Key backend: 'module://matplotlib_inline.backend_inline' is not a valid
+value for backend`. The notebook also sets `MPLBACKEND=Agg` in the
+subprocess environment. If matplotlib still cannot be used, a dependency-free
+SVG of the same curve is written instead.
 
 ---
 
@@ -124,6 +131,10 @@ candidate is picked regardless of the indexer — the sparse path is silently
 untested and `reuse_p` has no effect. The notebook now uses `seq_len=128`
 (selection ratio 0.8) and asserts the selection budget is strictly below the
 candidate count.
+
+A fourth was environmental: the notebook process exports an `MPLBACKEND`
+naming `matplotlib_inline`, which the venv cannot import, so the loss plot
+never rendered. The fix overrides `MPLBACKEND` before importing matplotlib.
 
 ---
 
