@@ -99,11 +99,14 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the detailed memory protocol, layer s
     ├── block.py                  # Layer blocks and conditioning
     ├── model.py                  # Training, prefill and decode
     ├── train.py                  # Reference training entry point
+    ├── hf_data.py                # Streaming Hugging Face data path
+    ├── arch_train.py             # 12-layer (100M body) training entry point
     ├── smoke_test.py             # Reference test suite
     └── maxtext/
         ├── modeling.py           # MaxText/NNX model wrapper
         ├── config.py             # MaxText configuration
         ├── train.py              # MaxText training entry point
+        ├── hf_train.py           # MaxText streaming-HF training entry point
         ├── configs/              # Tiny configuration files
         └── test_integration.py   # Integration tests
 
@@ -129,6 +132,37 @@ See the [JAX installation guide](https://docs.jax.dev/en/latest/installation.htm
     python3.11 -m loced.train
 
 This exercises the tiny reference training path. It is an implementation check, not a full language-model training recipe.
+
+## 12-Layer Reference Path (synthetic or real data)
+
+`loced/arch_train.py` is the validated **12-layer** LoCED model (dynamic mHC +
+MagicNorm, GPT-2 vocabulary, sparse top-1 MoE): a 99,749,744-parameter
+transformer body, 125,481,328 parameters in total, 5,304,176 active body
+parameters per token (5.32 % of the body).
+
+It runs the parameter audit, the sparse-top-1 MoE dispatch (with the
+dense-reference parity check), the data-parallel mesh gradient check, the
+training loop, the `reuse_p` evaluation sweep and a greedy generation, and
+writes a machine-readable JSON report. No plot is written.
+
+    # synthetic GPT-2 tokens (the default)
+    python -m loced.arch_train --data synthetic --steps 20
+
+    # real Hugging Face text
+    python -m loced.arch_train --data hf --steps 2000 \
+        --datasets nampdn-ai/tiny-textbooks,open-phi/programming_books_llama \
+        --out report.json
+
+`loced/hf_data.py` streams the datasets, mixes them with a deterministic ratio
+schedule, concatenates the documents through a rolling token buffer (so no
+token is dropped at a document boundary) and tokenises them with the GPT-2
+tokenizer (vocabulary exactly 50,257). Every dataset has an explicit
+text-column mapping in `DATASET_TEXT_FIELDS`; a dataset that cannot be loaded
+(missing token, terms not accepted) is reported and skipped.
+
+The HF token is read from `HF_TOKEN` / `HF_HUB_TOKEN` — it is never stored in
+the repository. The Kaggle TPU v5e-8 notebook
+`LoCED_100M_12L_Dynamic_mHC_GPT2_HF_TPU.ipynb` wires this path end to end.
 
 ## MaxText Integration
 

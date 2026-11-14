@@ -2,3 +2,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .smp/
+
+# generated training artifacts (never commit reports, caches or prefetched data)
+*_report.json
+loced_summary/
+hf_cache/
+loced_data/
+jax_cache/

@@ -19,6 +19,11 @@ from .config import LoCEDConfig
 from .diagnostics import (build_report, pool_norm_ratio, segment_layout,
                           segment_mass, selection_summary,
                           train_decode_kl_report)
+from .hf_data import (DATASET_TEXT_FIELDS, DEFAULT_DATASETS,
+                      clamp_token_ids, describe_dataset_fields,
+                      extract_text, hf_batches, local_dataset_files,
+                      mix_iterators, open_dataset_streams,
+                      resolve_text_fields)
 from .model import (count_params, decode_step, forward_train,
                     forward_train_diagnostics, generate, init_model, prefill)
 from .muon import (ADAMW, MUON, MUON_EXPERT, make_muon_mask, muon_adamw,
@@ -576,3 +581,187 @@ def test_train_delta_layout_matches_decode_store(params):
         assert train_pool == store_pool, f"pool mismatch at t={t}"
         assert train_delta == store_delta, f"delta mismatch at t={t}"
         assert train_ring == store_ring, f"ring mismatch at t={t}"
+
+
+# ---------------------------------------------------------------------------
+# Hugging Face data path (offline: no network, no dataset access)
+# ---------------------------------------------------------------------------
+
+def test_hf_dataset_field_map_is_complete():
+    """Every default dataset has an explicit text-field mapping.
+
+    The eight datasets do not share a schema, so a generic "first string
+    column" fallback would silently train on titles or UUIDs.
+    """
+    assert len(DEFAULT_DATASETS) == 8
+    for name in DEFAULT_DATASETS:
+        short = name.rsplit("/", 1)[-1]
+        assert short in DATASET_TEXT_FIELDS, f"no text fields for {name}"
+        fields = DATASET_TEXT_FIELDS[short]
+        assert fields and all(isinstance(f, str) and f for f in fields)
+        assert resolve_text_fields(name) == fields
+
+
+def test_hf_dataset_field_map_matches_the_verified_schemas():
+    """The verified column choices (the ones that carry the real prose)."""
+    assert DATASET_TEXT_FIELDS["tiny-textbooks"] == ("textbook", "text")
+    assert DATASET_TEXT_FIELDS["tiny-strange-textbooks"] == ("text",)
+    assert DATASET_TEXT_FIELDS["tiny-math-textbooks"] == ("response",)
+    assert DATASET_TEXT_FIELDS["tiny-codes"] == ("prompt", "response")
+    # tiny-code-textbooks has NO textbook/text column: `content` is the raw
+    # code and `response` is the explanation textbook.
+    assert DATASET_TEXT_FIELDS["tiny-code-textbooks"] == ("response", "content")
+    # `context` is an empty list in practice, so only `markdown` is used.
+    assert DATASET_TEXT_FIELDS["programming_books_llama"] == ("markdown",)
+    assert DATASET_TEXT_FIELDS["tiny-webtext"] == ("human", "bot")
+    assert DATASET_TEXT_FIELDS["textbooks-are-all-you-need-lite"] == \
+        ("completion", "notes")
+
+
+def test_hf_describe_dataset_fields_is_auditable():
+    """One line per dataset, naming the dataset and the fields it uses."""
+    lines = describe_dataset_fields(DEFAULT_DATASETS)
+    assert len(lines) == len(DEFAULT_DATASETS)
+    for name, line in zip(DEFAULT_DATASETS, lines):
+        assert name in line
+        assert "fields=" in line
+    # an unknown dataset falls back to the generic column search
+    fallback = describe_dataset_fields(["someone/unknown-dataset"])
+    assert "generic fallback" in fallback[0]
+
+
+def test_hf_extract_text_uses_the_dataset_fields():
+    """Only the mapped string fields are concatenated, in order."""
+    row = {
+        "response": "the explanation textbook",
+        "content": "fn main() {}",
+        "idx": 7,
+    }
+    text = extract_text("nampdn-ai/tiny-code-textbooks", row)
+    assert text == "the explanation textbook\n\nfn main() {}"
+
+    row = {"markdown": "# Chapter 1", "context": [], "outline": ["a", "b"]}
+    text = extract_text("open-phi/programming_books_llama", row)
+    assert text == "# Chapter 1"
+
+    row = {"human": "web text", "bot": "bot text",
+           "part_of_speech": "noun"}
+    text = extract_text("nampdn-ai/tiny-webtext", row)
+    assert text == "web text\n\nbot text"
+
+    # empty / missing fields never produce a document
+    assert extract_text("nampdn-ai/tiny-math-textbooks",
+                        {"response": "   "}) is None
+    assert extract_text("nampdn-ai/tiny-math-textbooks", {}) is None
+
+
+def test_hf_mix_iterators_contains_every_dataset():
+    """The ratio schedule mixes every dataset into the stream."""
+    counts = [7, 5, 3]
+    iterators = [
+        iter([f"{i}:{j}" for j in range(count)])
+        for i, count in enumerate(counts)
+    ]
+    rng = np.random.default_rng(0)
+    mixed = list(mix_iterators(iterators, [1.0, 1.0, 1.0], rng))
+    assert len(mixed) == sum(counts)
+    seen = {item.split(":")[0] for item in mixed}
+    assert seen == {"0", "1", "2"}
+
+    # the ratios are respected while both datasets are alive: 3:1 gives the
+    # first dataset ~3x the slots of the first 400 documents.
+    iterators = [iter([f"a{i}" for i in range(400)]),
+                 iter([f"b{i}" for i in range(400)])]
+    mixed = list(mix_iterators(iterators, [3.0, 1.0], np.random.default_rng(1)))
+    head = mixed[:400]
+    a = sum(1 for item in head if item.startswith("a"))
+    b = sum(1 for item in head if item.startswith("b"))
+    assert a > 0 and b > 0
+    assert 2.0 < a / b < 4.0
+
+
+def test_hf_token_ids_are_clamped():
+    """Token ids always land inside the embedding table."""
+    assert clamp_token_ids([0, 1, 50256], 50257) == [0, 1, 50256]
+    assert clamp_token_ids([-5, 50257, 99999], 50257) == [0, 50256, 50256]
+    assert clamp_token_ids([], 50257) == []
+    with pytest.raises(ValueError):
+        clamp_token_ids([0], 0)
+
+
+def test_hf_local_parquet_mirror_lookup(tmp_path):
+    """The prefetched mirror is found per dataset, without test shards."""
+    root = tmp_path / "tiny-codes"
+    root.mkdir()
+    (root / "train-00000-of-00001.parquet").write_bytes(b"")
+    (root / "test-00000-of-00001.parquet").write_bytes(b"")
+    (root / "validation.parquet").write_bytes(b"")
+    files = local_dataset_files("nampdn-ai/tiny-codes", tmp_path)
+    assert len(files) == 1
+    assert files[0].endswith("train-00000-of-00001.parquet")
+    with pytest.raises(FileNotFoundError):
+        local_dataset_files("nampdn-ai/tiny-math-textbooks", tmp_path)
+
+
+def test_hf_dataset_failure_is_graceful():
+    """A dataset that cannot be loaded is skipped, not fatal.
+
+    The stream is opened offline: no dataset can be reached here, so every
+    dataset must be reported as a failure instead of raising.
+    """
+    alive, failures = open_dataset_streams(
+        ["nampdn-ai/tiny-textbooks", "open-phi/programming_books_llama"])
+    assert alive == []
+    assert len(failures) == 2
+    for message in failures:
+        assert "skipped" in message
+
+
+class _FakeTokenizer:
+    """A tiny offline tokenizer (character codes) for the mirror test."""
+
+    pad_token_id = 0
+    eos_token_id = 1
+    bos_token_id = None
+
+    def encode(self, text, add_special_tokens=False):
+        return [ord(char) % 500 for char in text][:64]
+
+
+def test_hf_batches_over_a_local_parquet_mirror(tmp_path, monkeypatch):
+    """``hf_batches`` reads a prefetched parquet mirror and emits int32
+    ``[batch, seq]`` batches. Skipped when ``datasets``/``pyarrow`` are not
+    installed (the reference CPU environment has no ``datasets``)."""
+    pytest.importorskip("datasets")
+    pa = pytest.importorskip("pyarrow")
+    import pyarrow.parquet as pq
+
+    root = tmp_path / "tiny-textbooks"
+    root.mkdir()
+    table = pa.table({
+        "textbook": [f"lesson {i}: " + "alpha beta gamma " * 8
+                     for i in range(64)],
+        "text": [f"excerpt {i}" for i in range(64)],
+    })
+    pq.write_table(table, root / "train-00000-of-00001.parquet")
+
+    monkeypatch.setattr("loced.hf_data.build_tokenizer",
+                        lambda name, token=None: _FakeTokenizer())
+    batches = list(hf_batches(
+        vocab_size=50257,
+        seq_len=16,
+        batch_size=2,
+        datasets=("nampdn-ai/tiny-textbooks",),
+        ratios=(1.0,),
+        seed=0,
+        tokenizer_name="gpt2",
+        max_examples=64,
+        local_root=tmp_path,
+    ))
+    assert batches, "the local mirror produced no batches"
+    for batch in batches:
+        arr = np.asarray(batch)
+        assert arr.ndim == 2
+        assert arr.shape[1] == 16
+        assert arr.dtype == np.int32
+        assert arr.min() >= 0 and arr.max() < 50257
